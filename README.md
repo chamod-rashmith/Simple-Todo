@@ -8,7 +8,7 @@
 
   [![Flutter](https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white)](https://flutter.dev)
   [![Dart](https://img.shields.io/badge/Dart-%230175C2.svg?style=for-the-badge&logo=Dart&logoColor=white)](https://dart.dev)
-  [![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://www.android.com)
+  [![Drift DB](https://img.shields.io/badge/Database-Drift--DB%20(SQLite)-02569B?style=for-the-badge&logo=sqlite&logoColor=white)](https://drift.simonbinder.eu)
   [![BLoC](https://img.shields.io/badge/BLoC-v9.1.1-blue?style=for-the-badge)](https://pub.dev/packages/flutter_bloc)
   [![Clean Architecture](https://img.shields.io/badge/Architecture-Clean-brightgreen?style=for-the-badge)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
   [![License](https://img.shields.io/badge/License-Non--Commercial-red?style=for-the-badge)](LICENSE)
@@ -21,7 +21,7 @@
 
 **Simple Todo** is a clean, modern task management application built with a focus on high-contrast minimalism, elegant visual restraint, and effortless daily productivity. 
 
-The codebase strictly adheres to **Clean Architecture** (Domain, Data, Presentation layers), **BLoC State Management**, **Modular GetIt Dependency Injection**, and a **Decomposed Sub-Widget Architecture** for maximum performance, maintainability, and code quality.
+The codebase strictly adheres to **Clean Architecture** (Domain, Data, Presentation layers), **BLoC State Management**, **Drift DB (SQLite)** local persistence, **Modular GetIt Dependency Injection**, and a **Decomposed Sub-Widget Architecture** for maximum performance, maintainability, and code quality.
 
 ---
 
@@ -32,7 +32,7 @@ The codebase strictly adheres to **Clean Architecture** (Domain, Data, Presentat
 - **🏷️ Category Filtering**: Organize tasks across categories (*Personal*, *Work*, *Design*, *Health*) with smooth horizontal chip selectors.
 - **🔍 Quick Search & Status Filters**: Instantly search tasks by title or notes, and toggle between *All*, *Pending*, and *Done* filters.
 - **⚡ Interactive Micro-Animations**: Smooth tap responses, custom circular checkboxes, and swipe-to-delete gestures.
-- **💾 Local Persistence**: Fast offline task caching using `SharedPreferences`.
+- **💾 Local Persistence**: Fast, offline task persistence powered by **Drift DB (SQLite)**.
 
 ---
 
@@ -43,6 +43,7 @@ Built following **Feature-First Clean Architecture** principles:
 ```text
 lib/
 ├── core/
+│   ├── database/                  # Drift DB (SQLite) Database & Generated Tables
 │   ├── di/                        # Modular GetIt Dependency Injection
 │   │   ├── modules/
 │   │   │   └── todo_module.dart
@@ -53,7 +54,7 @@ lib/
 └── features/
     └── todo/
         ├── data/                  # Data Layer (Models, DataSources, Repositories Impl)
-        │   ├── datasources/
+        │   ├── datasources/       # Local DataSource querying Drift DB
         │   ├── models/            # Freezed DataModels & Extension Mappers (toEntity/fromEntity)
         │   └── repositories/
         ├── domain/                # Domain Layer (Entities, Repository Interfaces, UseCases)
@@ -99,12 +100,17 @@ lib/
    flutter pub get
    ```
 
-3. **Build Android APK**:
+3. **Generate Drift Database code**:
+   ```bash
+   dart run build_runner build --delete-conflicting-outputs
+   ```
+
+4. **Build Android APK**:
    ```bash
    flutter build apk --split-per-abi
    ```
 
-4. **Run the application**:
+5. **Run the application**:
    ```bash
    flutter run
    ```

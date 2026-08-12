@@ -1,78 +1,78 @@
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:drift/drift.dart';
+import '../../../../core/database/app_database.dart';
 import '../models/todo_item_model.dart';
 
 abstract class TodoLocalDataSource {
   Future<List<TodoItemModel>> getTodos();
-  Future<void> saveTodos(List<TodoItemModel> todos);
+  Future<void> addTodo(TodoItemModel model);
+  Future<void> toggleTodoStatus(String id);
+  Future<void> deleteTodo(String id);
 }
 
 class TodoLocalDataSourceImpl implements TodoLocalDataSource {
-  final SharedPreferences sharedPreferences;
-  static const String _kTodosKey = 'CACHED_TODOS_V1';
+  final AppDatabase database;
 
-  TodoLocalDataSourceImpl(this.sharedPreferences);
+  TodoLocalDataSourceImpl(this.database);
 
   @override
   Future<List<TodoItemModel>> getTodos() async {
-    final jsonString = sharedPreferences.getString(_kTodosKey);
-    if (jsonString != null && jsonString.isNotEmpty) {
-      final List<dynamic> decoded = jsonDecode(jsonString);
-      return decoded
-          .map((item) => TodoItemModel.fromJson(item as Map<String, dynamic>))
-          .toList();
-    }
-    // Initial mock data if empty
-    return _initialMockData;
+    final rows = await (database.select(database.todoItemEntries)
+          ..orderBy([
+            (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc)
+          ]))
+        .get();
+
+    return rows.map((row) {
+      return TodoItemModel(
+        id: row.id,
+        title: row.title,
+        description: row.description,
+        category: row.category,
+        isCompleted: row.isCompleted,
+        priority: row.priority,
+        dueDate: row.dueDate,
+        createdAt: row.createdAt,
+      );
+    }).toList();
   }
 
   @override
-  Future<void> saveTodos(List<TodoItemModel> todos) async {
-    final jsonString = jsonEncode(todos.map((t) => t.toJson()).toList());
-    await sharedPreferences.setString(_kTodosKey, jsonString);
+  Future<void> addTodo(TodoItemModel model) async {
+    await database.into(database.todoItemEntries).insertOnConflictUpdate(
+          TodoItemEntriesCompanion.insert(
+            id: model.id,
+            title: model.title,
+            description: model.description,
+            category: model.category,
+            isCompleted: Value(model.isCompleted),
+            priority: model.priority,
+            dueDate: Value(model.dueDate),
+            createdAt: model.createdAt,
+          ),
+        );
   }
 
-  static List<TodoItemModel> get _initialMockData {
-    final now = DateTime.now();
-    return [
-      TodoItemModel(
-        id: '1',
-        title: 'Review Stitch Cupertino Wireframes',
-        description: 'Check layout responsiveness and monochromatic contrast.',
-        category: 'Design',
-        isCompleted: true,
-        priority: 'high',
-        createdAt: now.subtract(const Duration(hours: 4)).toIso8601String(),
-      ),
-      TodoItemModel(
-        id: '2',
-        title: 'Implement Clean Architecture Data Layer',
-        description: 'Setup repositories, data sources, and extension mappers.',
-        category: 'Work',
-        isCompleted: false,
-        priority: 'high',
-        dueDate: now.add(const Duration(days: 1)).toIso8601String(),
-        createdAt: now.subtract(const Duration(hours: 2)).toIso8601String(),
-      ),
-      TodoItemModel(
-        id: '3',
-        title: 'Decompose Presentation Pages into Widgets',
-        description: 'Extract small modular widgets to keep code clean and readable.',
-        category: 'Work',
-        isCompleted: false,
-        priority: 'medium',
-        dueDate: now.add(const Duration(days: 2)).toIso8601String(),
-        createdAt: now.subtract(const Duration(hours: 1)).toIso8601String(),
-      ),
-      TodoItemModel(
-        id: '4',
-        title: 'Morning Mindfulness & Coffee',
-        description: '15 mins meditation and espresso.',
-        category: 'Personal',
-        isCompleted: true,
-        priority: 'low',
-        createdAt: now.subtract(const Duration(hours: 8)).toIso8601String(),
-      ),
-    ];
+  @override
+  Future<void> toggleTodoStatus(String id) async {
+    final current = await (database.select(database.todoItemEntries)
+          ..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+
+    if (current != null) {
+      await (database.update(database.todoItemEntries)
+            ..where((t) => t.id.equals(id)))
+          .write(
+        TodoItemEntriesCompanion(
+          isCompleted: Value(!current.isCompleted),
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<void> deleteTodo(String id) async {
+    await (database.delete(database.todoItemEntries)
+          ..where((t) => t.id.equals(id)))
+        .go();
   }
 }

@@ -16,30 +16,17 @@ class TodoRepositoryImpl implements TodoRepository {
 
   @override
   Future<void> addTodo(TodoItemEntity todo) async {
-    final currentModels = await localDataSource.getTodos();
-    final newModel = TodoItemModelX.fromEntity(todo);
-    final updatedModels = [newModel, ...currentModels];
-    await localDataSource.saveTodos(updatedModels);
+    final model = TodoItemModelX.fromEntity(todo);
+    await localDataSource.addTodo(model);
   }
 
   @override
   Future<void> toggleTodoStatus(String id) async {
-    final currentModels = await localDataSource.getTodos();
-    final updatedModels = currentModels.map((model) {
-      if (model.id == id) {
-        final entity = model.toEntity();
-        final updatedEntity = entity.copyWith(isCompleted: !entity.isCompleted);
-        return TodoItemModelX.fromEntity(updatedEntity);
-      }
-      return model;
-    }).toList();
-    await localDataSource.saveTodos(updatedModels);
+    await localDataSource.toggleTodoStatus(id);
   }
 
   @override
   Future<void> deleteTodo(String id) async {
-    final currentModels = await localDataSource.getTodos();
-    final updatedModels = currentModels.where((model) => model.id != id).toList();
-    await localDataSource.saveTodos(updatedModels);
+    await localDataSource.deleteTodo(id);
   }
 }
