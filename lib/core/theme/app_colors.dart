@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Design Tokens & Monochromatic Color Palette based on Stitch "Obsidian & Alabaster"
 abstract class AppColors {

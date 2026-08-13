@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'app_colors.dart';
 
 /// Typography System based on Stitch Design System
