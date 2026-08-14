@@ -52,11 +52,7 @@ icons_launcher:
 flutter:
   uses-material-design: true
 
-hooks:
-  user_defines:
-    sqlite3:
-      source: source
-      path: sqlite3.c
+
 
 
 
