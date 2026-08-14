@@ -3,13 +3,28 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
 
-class TodoHeaderWidget extends StatelessWidget {
+class TodoHeaderWidget extends StatefulWidget {
+  final int activeTaskCount;
   final ValueChanged<String> onSearchChanged;
 
   const TodoHeaderWidget({
     super.key,
+    this.activeTaskCount = 0,
     required this.onSearchChanged,
   });
+
+  @override
+  State<TodoHeaderWidget> createState() => _TodoHeaderWidgetState();
+}
+
+class _TodoHeaderWidgetState extends State<TodoHeaderWidget> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,8 +34,10 @@ class TodoHeaderWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Top row with Date & Active Badge
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,38 +48,91 @@ class TodoHeaderWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 const Text(
-                  'My Tasks',
+                  'Tasks',
                   style: AppTypography.display,
                 ),
               ],
             ),
             Container(
-              width: 44,
-              height: 44,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.hairline),
+                color: AppColors.black,
+                borderRadius: BorderRadius.circular(20),
               ),
-              child: const Icon(
-                Icons.check_circle_outline_rounded,
-                color: AppColors.primary,
-                size: 22,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: AppColors.white,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${widget.activeTaskCount} pending',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.white,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
-        const SizedBox(height: 16),
-        TextField(
-          onChanged: onSearchChanged,
-          decoration: InputDecoration(
-            hintText: 'Search tasks...',
-            prefixIcon: const Icon(
-              Icons.search_rounded,
-              color: AppColors.textMuted,
-              size: 20,
+        const SizedBox(height: 18),
+
+        // Modern Minimalist Search Bar
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.hairline, width: 1.0),
+          ),
+          child: TextField(
+            controller: _searchController,
+            onChanged: widget.onSearchChanged,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w500,
             ),
-            fillColor: AppColors.surfaceContainerLow,
+            decoration: InputDecoration(
+              hintText: 'Search tasks by title or note...',
+              hintStyle: const TextStyle(
+                color: AppColors.textMuted,
+                fontSize: 14,
+              ),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+                color: AppColors.black,
+                size: 20,
+              ),
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(
+                        Icons.clear_rounded,
+                        color: AppColors.textMuted,
+                        size: 18,
+                      ),
+                      onPressed: () {
+                        _searchController.clear();
+                        widget.onSearchChanged('');
+                        setState(() {});
+                      },
+                    )
+                  : null,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              fillColor: Colors.transparent,
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+            ),
           ),
         ),
       ],

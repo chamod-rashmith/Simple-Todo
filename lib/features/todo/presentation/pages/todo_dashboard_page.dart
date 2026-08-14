@@ -9,11 +9,19 @@ import '../widgets/todo_empty_state_widget.dart';
 import '../widgets/todo_filter_bar_widget.dart';
 import '../widgets/todo_header_widget.dart';
 import '../widgets/todo_item_tile_widget.dart';
+import '../widgets/todo_shimmer_loading_widget.dart';
 import '../widgets/todo_stats_banner_widget.dart';
 import 'create_todo_modal.dart';
 
 class TodoDashboardPage extends StatelessWidget {
   const TodoDashboardPage({super.key});
+
+  Future<void> _openCreateTodoModal(BuildContext context) async {
+    final newTodo = await CreateTodoModal.show(context);
+    if (newTodo != null && context.mounted) {
+      context.read<TodoBloc>().add(AddTodoEvent(newTodo));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,32 +36,38 @@ class TodoDashboardPage extends StatelessWidget {
                   content: Text(state.errorMessage!),
                   backgroundColor: AppColors.error,
                   behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               );
             }
           },
           builder: (context, state) {
             final bloc = context.read<TodoBloc>();
+            final pendingCount = state.totalCount - state.completedCount;
 
             return RefreshIndicator(
               onRefresh: () async {
                 bloc.add(LoadTodosEvent());
               },
-              color: AppColors.primary,
+              color: AppColors.black,
+              backgroundColor: AppColors.white,
               child: CustomScrollView(
                 slivers: [
-                  // App Header
+                  // App Header with Search & Pending Count
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
                     sliver: SliverToBoxAdapter(
                       child: TodoHeaderWidget(
+                        activeTaskCount: pendingCount,
                         onSearchChanged: (query) =>
                             bloc.add(SearchQueryEvent(query)),
                       ),
                     ),
                   ),
 
-                  // Progress Summary Banner
+                  // Progress Summary Hero Banner
                   if (state.totalCount > 0)
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -66,7 +80,7 @@ class TodoDashboardPage extends StatelessWidget {
                       ),
                     ),
 
-                  // Category Selector
+                  // Category Selector Carousel
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
                     sliver: SliverToBoxAdapter(
@@ -79,7 +93,7 @@ class TodoDashboardPage extends StatelessWidget {
                     ),
                   ),
 
-                  // Segmented Filter Bar
+                  // Segmented Filter Bar (All / Pending / Completed)
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     sliver: SliverToBoxAdapter(
@@ -97,18 +111,18 @@ class TodoDashboardPage extends StatelessWidget {
 
                   // Main List Body
                   if (state.status == TodoStatus.loading && state.todos.isEmpty)
-                    const SliverFillRemaining(
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primary,
-                          strokeWidth: 2,
-                        ),
+                    const SliverPadding(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      sliver: SliverToBoxAdapter(
+                        child: TodoShimmerLoadingWidget(),
                       ),
                     )
                   else if (state.filteredTodos.isEmpty)
-                    const SliverFillRemaining(
+                    SliverFillRemaining(
                       hasScrollBody: false,
-                      child: TodoEmptyStateWidget(),
+                      child: TodoEmptyStateWidget(
+                        onAction: () => _openCreateTodoModal(context),
+                      ),
                     )
                   else
                     SliverPadding(
@@ -120,7 +134,7 @@ class TodoDashboardPage extends StatelessWidget {
                             return TodoItemTileWidget(
                               todo: todo,
                               onToggle: () =>
-                                  bloc.add(ToggleTodoEvent(todo.id)),
+                                   bloc.add(ToggleTodoEvent(todo.id)),
                               onDelete: () =>
                                   bloc.add(DeleteTodoEvent(todo.id)),
                             );
@@ -131,7 +145,7 @@ class TodoDashboardPage extends StatelessWidget {
                     ),
 
                   const SliverToBoxAdapter(
-                    child: SizedBox(height: 80),
+                    child: SizedBox(height: 88),
                   ),
                 ],
               ),
@@ -140,16 +154,13 @@ class TodoDashboardPage extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          final newTodo = await CreateTodoModal.show(context);
-          if (newTodo != null && context.mounted) {
-            context.read<TodoBloc>().add(AddTodoEvent(newTodo));
-          }
-        },
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.onPrimary,
-        elevation: 4,
-        shape: const CircleBorder(),
+        onPressed: () => _openCreateTodoModal(context),
+        backgroundColor: AppColors.black,
+        foregroundColor: AppColors.white,
+        elevation: 6,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
         child: const Icon(Icons.add_rounded, size: 28),
       ),
     );

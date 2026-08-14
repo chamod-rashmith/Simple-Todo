@@ -1,9 +1,12 @@
-import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/todo_item.dart';
+import 'form/category_picker_chips_widget.dart';
+import 'form/due_date_time_picker_card_widget.dart';
+import 'form/form_section_label_widget.dart';
+import 'form/priority_picker_segmented_widget.dart';
 
 class AddTodoFormWidget extends StatefulWidget {
   final ValueChanged<TodoItemEntity> onSubmit;
@@ -35,20 +38,29 @@ class _AddTodoFormWidgetState extends State<AddTodoFormWidget> {
     super.dispose();
   }
 
-  /// Prompts user to pick a date & time, then requests notification permission if needed.
   Future<void> _pickDueDateTime() async {
-    // 1. Pick Date
     final initialDate = _selectedDueDate ?? DateTime.now();
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: initialDate,
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.black,
+              onPrimary: AppColors.white,
+              onSurface: AppColors.textPrimary,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (pickedDate == null || !mounted) return;
 
-    // 2. Pick Time
     final initialTime = _selectedDueDate != null
         ? TimeOfDay(hour: _selectedDueDate!.hour, minute: _selectedDueDate!.minute)
         : TimeOfDay.now();
@@ -56,11 +68,22 @@ class _AddTodoFormWidgetState extends State<AddTodoFormWidget> {
     final pickedTime = await showTimePicker(
       context: context,
       initialTime: initialTime,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.black,
+              onPrimary: AppColors.white,
+              onSurface: AppColors.textPrimary,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (pickedTime == null || !mounted) return;
 
-    // 3. Combine into single DateTime
     final selectedDateTime = DateTime(
       pickedDate.year,
       pickedDate.month,
@@ -73,7 +96,6 @@ class _AddTodoFormWidgetState extends State<AddTodoFormWidget> {
       _selectedDueDate = selectedDateTime;
     });
 
-    // 4. Proactively request notification permissions on reminder set
     if (sl.isRegistered<NotificationService>()) {
       await sl<NotificationService>().requestPermission();
     }
@@ -106,6 +128,11 @@ class _AddTodoFormWidgetState extends State<AddTodoFormWidget> {
           TextFormField(
             controller: _titleController,
             autofocus: true,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
             decoration: const InputDecoration(
               hintText: 'What needs to be done?',
               labelText: 'Task Title',
@@ -123,174 +150,75 @@ class _AddTodoFormWidgetState extends State<AddTodoFormWidget> {
           TextFormField(
             controller: _descriptionController,
             maxLines: 3,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.textPrimary,
+            ),
             decoration: const InputDecoration(
-              hintText: 'Add notes or subtasks...',
+              hintText: 'Add additional details or notes...',
               labelText: 'Description (Optional)',
             ),
           ),
           const SizedBox(height: 20),
 
-          // Category Chips
-          const Text(
-            'CATEGORY',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textMuted,
-              letterSpacing: 0.5,
-            ),
-          ),
+          // Category Section
+          const FormSectionLabelWidget(label: 'Category'),
           const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            children: _categories.map((cat) {
-              final isSelected = cat == _selectedCategory;
-              return ChoiceChip(
-                label: Text(cat),
-                selected: isSelected,
-                onSelected: (selected) {
-                  if (selected) setState(() => _selectedCategory = cat);
-                },
-                selectedColor: AppColors.primary,
-                backgroundColor: AppColors.chipBackground,
-                labelStyle: TextStyle(
-                  color: isSelected ? AppColors.onPrimary : AppColors.textPrimary,
-                  fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: BorderSide.none,
-                ),
-              );
-            }).toList(),
+          CategoryPickerChipsWidget(
+            categories: _categories,
+            selectedCategory: _selectedCategory,
+            onSelected: (cat) => setState(() => _selectedCategory = cat),
           ),
           const SizedBox(height: 20),
 
-          // Priority Selection
-          const Text(
-            'PRIORITY',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textMuted,
-              letterSpacing: 0.5,
-            ),
-          ),
+          // Priority Section
+          const FormSectionLabelWidget(label: 'Priority Level'),
           const SizedBox(height: 8),
-          Row(
-            children: TodoPriority.values.map((priority) {
-              final isSelected = priority == _selectedPriority;
-              return Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: OutlinedButton(
-                    onPressed: () => setState(() => _selectedPriority = priority),
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: isSelected ? AppColors.primary : Colors.transparent,
-                      side: BorderSide(
-                        color: isSelected ? AppColors.primary : AppColors.hairline,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    child: Text(
-                      priority.name.toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: isSelected ? AppColors.onPrimary : AppColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
+          PriorityPickerSegmentedWidget(
+            selectedPriority: _selectedPriority,
+            onSelected: (p) => setState(() => _selectedPriority = p),
           ),
           const SizedBox(height: 20),
 
-          // Due Date & Reminder Section
-          const Text(
-            'REMINDER & DUE DATE',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textMuted,
-              letterSpacing: 0.5,
-            ),
-          ),
+          // Due Date & Notification Reminder
+          const FormSectionLabelWidget(label: 'Reminder & Deadline'),
           const SizedBox(height: 8),
-          InkWell(
+          DueDateTimePickerCardWidget(
+            selectedDueDate: _selectedDueDate,
             onTap: _pickDueDateTime,
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: _selectedDueDate != null
-                    ? AppColors.primary.withValues(alpha: 0.08)
-                    : AppColors.chipBackground,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: _selectedDueDate != null
-                      ? AppColors.primary.withValues(alpha: 0.3)
-                      : AppColors.hairline,
-                  width: 1,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.notifications_active_outlined,
-                    size: 20,
-                    color: _selectedDueDate != null
-                        ? AppColors.primary
-                        : AppColors.textMuted,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      _selectedDueDate != null
-                          ? DateFormat('EEE, MMM d, yyyy • h:mm a').format(_selectedDueDate!)
-                          : 'Set deadline & reminder notification',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: _selectedDueDate != null ? FontWeight.w600 : FontWeight.w400,
-                        color: _selectedDueDate != null
-                            ? AppColors.primary
-                            : AppColors.textMuted,
-                      ),
-                    ),
-                  ),
-                  if (_selectedDueDate != null)
-                    GestureDetector(
-                      onTap: () => setState(() => _selectedDueDate = null),
-                      child: const Icon(
-                        Icons.cancel_rounded,
-                        size: 18,
-                        color: AppColors.textMuted,
-                      ),
-                    )
-                  else
-                    const Icon(
-                      Icons.calendar_today_rounded,
-                      size: 16,
-                      color: AppColors.textMuted,
-                    ),
-                ],
-              ),
-            ),
+            onClear: () => setState(() => _selectedDueDate = null),
           ),
           const SizedBox(height: 28),
 
-          // Submit Button
+          // Submit CTA Button
           SizedBox(
             width: double.infinity,
-            height: 50,
+            height: 52,
             child: ElevatedButton(
               onPressed: _submitForm,
-              child: const Text('Create Task'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.black,
+                foregroundColor: AppColors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.add_task_rounded, size: 20, color: AppColors.white),
+                  SizedBox(width: 8),
+                  Text(
+                    'Create Task',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

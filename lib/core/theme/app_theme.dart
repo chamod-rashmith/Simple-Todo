@@ -13,7 +13,6 @@ abstract class AppTheme {
         onSurface: AppColors.onBackground,
         error: AppColors.error,
       ),
-      fontFamily: 'Inter',
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.background,
         elevation: 0,
@@ -25,8 +24,8 @@ abstract class AppTheme {
         color: AppColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: AppColors.hairline, width: 0.8),
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: AppColors.hairline, width: 1.0),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -34,12 +33,16 @@ abstract class AppTheme {
         fillColor: AppColors.chipBackground,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.hairline, width: 1.0),
+        ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.2),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
         ),
         hintStyle: const TextStyle(
           color: AppColors.textMuted,
@@ -52,10 +55,15 @@ abstract class AppTheme {
           foregroundColor: AppColors.onPrimary,
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
           ),
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
         ),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: Colors.transparent,
+        modalBackgroundColor: Colors.transparent,
+        elevation: 0,
       ),
     );
   }

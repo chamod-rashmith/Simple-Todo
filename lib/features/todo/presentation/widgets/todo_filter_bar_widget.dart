@@ -16,14 +16,15 @@ class TodoFilterBarWidget extends StatelessWidget {
     final filters = [
       {'key': 'all', 'label': 'All Tasks'},
       {'key': 'active', 'label': 'Pending'},
-      {'key': 'completed', 'label': 'Done'},
+      {'key': 'completed', 'label': 'Completed'},
     ];
 
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.hairline, width: 1.0),
       ),
       child: Row(
         children: filters.map((f) {
@@ -33,15 +34,16 @@ class TodoFilterBarWidget extends StatelessWidget {
               onTap: () => onFilterChanged(f['key']!),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                curve: Curves.easeInOut,
+                padding: const EdgeInsets.symmetric(vertical: 9),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.surface : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
+                  color: isSelected ? AppColors.black : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 4,
+                            color: AppColors.black.withValues(alpha: 0.15),
+                            blurRadius: 6,
                             offset: const Offset(0, 2),
                           ),
                         ]
@@ -52,8 +54,8 @@ class TodoFilterBarWidget extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: isSelected ? AppColors.textPrimary : AppColors.textSecondary,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color: isSelected ? AppColors.white : AppColors.textSecondary,
                   ),
                 ),
               ),
