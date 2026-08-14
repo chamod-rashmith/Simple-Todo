@@ -1,4 +1,7 @@
+import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
+import '../../../../core/di/injection_container.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/todo_item.dart';
 
@@ -30,6 +33,50 @@ class _AddTodoFormWidgetState extends State<AddTodoFormWidget> {
     _titleController.dispose();
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  /// Prompts user to pick a date & time, then requests notification permission if needed.
+  Future<void> _pickDueDateTime() async {
+    // 1. Pick Date
+    final initialDate = _selectedDueDate ?? DateTime.now();
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+    );
+
+    if (pickedDate == null || !mounted) return;
+
+    // 2. Pick Time
+    final initialTime = _selectedDueDate != null
+        ? TimeOfDay(hour: _selectedDueDate!.hour, minute: _selectedDueDate!.minute)
+        : TimeOfDay.now();
+
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+    );
+
+    if (pickedTime == null || !mounted) return;
+
+    // 3. Combine into single DateTime
+    final selectedDateTime = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+
+    setState(() {
+      _selectedDueDate = selectedDateTime;
+    });
+
+    // 4. Proactively request notification permissions on reminder set
+    if (sl.isRegistered<NotificationService>()) {
+      await sl<NotificationService>().requestPermission();
+    }
   }
 
   void _submitForm() {
@@ -161,6 +208,79 @@ class _AddTodoFormWidgetState extends State<AddTodoFormWidget> {
                 ),
               );
             }).toList(),
+          ),
+          const SizedBox(height: 20),
+
+          // Due Date & Reminder Section
+          const Text(
+            'REMINDER & DUE DATE',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textMuted,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          InkWell(
+            onTap: _pickDueDateTime,
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: _selectedDueDate != null
+                    ? AppColors.primary.withValues(alpha: 0.08)
+                    : AppColors.chipBackground,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: _selectedDueDate != null
+                      ? AppColors.primary.withValues(alpha: 0.3)
+                      : AppColors.hairline,
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.notifications_active_outlined,
+                    size: 20,
+                    color: _selectedDueDate != null
+                        ? AppColors.primary
+                        : AppColors.textMuted,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _selectedDueDate != null
+                          ? DateFormat('EEE, MMM d, yyyy • h:mm a').format(_selectedDueDate!)
+                          : 'Set deadline & reminder notification',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: _selectedDueDate != null ? FontWeight.w600 : FontWeight.w400,
+                        color: _selectedDueDate != null
+                            ? AppColors.primary
+                            : AppColors.textMuted,
+                      ),
+                    ),
+                  ),
+                  if (_selectedDueDate != null)
+                    GestureDetector(
+                      onTap: () => setState(() => _selectedDueDate = null),
+                      child: const Icon(
+                        Icons.cancel_rounded,
+                        size: 18,
+                        color: AppColors.textMuted,
+                      ),
+                    )
+                  else
+                    const Icon(
+                      Icons.calendar_today_rounded,
+                      size: 16,
+                      color: AppColors.textMuted,
+                    ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 28),
 

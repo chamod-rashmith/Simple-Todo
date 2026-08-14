@@ -42,6 +42,7 @@ void initTodoModule(GetIt sl) {
       addTodoUseCase: sl(),
       toggleTodoUseCase: sl(),
       deleteTodoUseCase: sl(),
+      notificationService: sl(),
     ),
   );
 }

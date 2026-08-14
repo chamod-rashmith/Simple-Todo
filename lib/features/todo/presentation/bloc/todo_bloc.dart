@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../../domain/entities/todo_item.dart';
 import '../../domain/usecases/add_todo_usecase.dart';
@@ -8,17 +9,26 @@ import '../../domain/usecases/toggle_todo_usecase.dart';
 import 'todo_event.dart';
 import 'todo_state.dart';
 
+/// ============================================================================
+/// TodoBloc
+/// ============================================================================
+///
+/// **Clean Architecture Presentation State Management (BLoC):**
+/// Manages state for todo lists, filtering, searching, task additions, status
+/// toggles, deletions, and automated local notification reminders.
 class TodoBloc extends Bloc<TodoEvent, TodoState> {
   final GetTodosUseCase getTodosUseCase;
   final AddTodoUseCase addTodoUseCase;
   final ToggleTodoUseCase toggleTodoUseCase;
   final DeleteTodoUseCase deleteTodoUseCase;
+  final NotificationService notificationService;
 
   TodoBloc({
     required this.getTodosUseCase,
     required this.addTodoUseCase,
     required this.toggleTodoUseCase,
     required this.deleteTodoUseCase,
+    required this.notificationService,
   }) : super(const TodoState()) {
     on<LoadTodosEvent>(_onLoadTodos);
     on<AddTodoEvent>(_onAddTodo);
@@ -49,7 +59,13 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
 
   Future<void> _onAddTodo(AddTodoEvent event, Emitter<TodoState> emit) async {
     try {
+      // 1. Save task to persistent storage via domain use case
       await addTodoUseCase(event.todo);
+
+      // 2. Schedule local reminder if task has a future deadline
+      await notificationService.scheduleTodoReminder(event.todo);
+
+      // 3. Reload list to update presentation state
       add(LoadTodosEvent());
     } catch (e) {
       emit(state.copyWith(errorMessage: 'Failed to add todo'));
@@ -58,6 +74,19 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
 
   Future<void> _onToggleTodo(ToggleTodoEvent event, Emitter<TodoState> emit) async {
     try {
+      // Find matching item in current state to determine if it is being completed or reopened
+      final existingIndex = state.todos.indexWhere((t) => t.id == event.id);
+      if (existingIndex != -1) {
+        final currentTodo = state.todos[existingIndex];
+        if (!currentTodo.isCompleted) {
+          // Task is about to be marked as completed -> cancel pending reminder
+          await notificationService.cancelTodoReminder(event.id);
+        } else {
+          // Task is being unmarked/reopened -> reschedule reminder if applicable
+          await notificationService.scheduleTodoReminder(currentTodo);
+        }
+      }
+
       await toggleTodoUseCase(event.id);
       add(LoadTodosEvent());
     } catch (e) {
@@ -67,6 +96,9 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
 
   Future<void> _onDeleteTodo(DeleteTodoEvent event, Emitter<TodoState> emit) async {
     try {
+      // Cancel any scheduled system notification for the deleted task
+      await notificationService.cancelTodoReminder(event.id);
+
       await deleteTodoUseCase(event.id);
       add(LoadTodosEvent());
     } catch (e) {

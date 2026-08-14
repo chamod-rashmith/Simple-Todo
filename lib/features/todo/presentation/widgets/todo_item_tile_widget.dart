@@ -31,7 +31,7 @@ class TodoItemTileWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final priorityColor = _getPriorityColor(todo.priority);
     final formattedDate = todo.dueDate != null
-        ? DateFormat('MMM d').format(todo.dueDate!)
+        ? DateFormat('MMM d, h:mm a').format(todo.dueDate!)
         : null;
 
     return Dismissible(
@@ -163,8 +163,8 @@ class TodoItemTileWidget extends StatelessWidget {
                           if (formattedDate != null) ...[
                             const Spacer(),
                             Icon(
-                              Icons.calendar_today_outlined,
-                              size: 12,
+                              Icons.notifications_active_outlined,
+                              size: 13,
                               color: AppColors.textMuted,
                             ),
                             const SizedBox(width: 4),

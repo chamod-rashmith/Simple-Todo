@@ -1,4 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:simple_todo/core/services/notification_service.dart';
+import 'package:simple_todo/features/notification/domain/entities/notification_item.dart';
+import 'package:simple_todo/features/notification/domain/repositories/notification_repository.dart';
+import 'package:simple_todo/features/notification/domain/usecases/cancel_notification_usecase.dart';
+import 'package:simple_todo/features/notification/domain/usecases/request_permission_usecase.dart';
+import 'package:simple_todo/features/notification/domain/usecases/schedule_notification_usecase.dart';
+import 'package:simple_todo/features/notification/domain/usecases/show_instant_notification_usecase.dart';
 import 'package:simple_todo/features/todo/domain/entities/todo_item.dart';
 import 'package:simple_todo/features/todo/domain/repositories/todo_repository.dart';
 import 'package:simple_todo/features/todo/domain/usecases/add_todo_usecase.dart';
@@ -34,17 +41,48 @@ class FakeTodoRepository implements TodoRepository {
   }
 }
 
+class FakeNotificationRepository implements NotificationRepository {
+  @override
+  Future<void> cancelAllNotifications() async {}
+
+  @override
+  Future<void> cancelNotification(String id) async {}
+
+  @override
+  Future<void> initialize() async {}
+
+  @override
+  Future<bool> requestPermission() async => true;
+
+  @override
+  Future<void> scheduleNotification(NotificationItemEntity notification) async {}
+
+  @override
+  Future<void> showInstantNotification(NotificationItemEntity notification) async {}
+}
+
 void main() {
   late TodoBloc bloc;
   late FakeTodoRepository repository;
+  late FakeNotificationRepository notificationRepository;
+  late NotificationService notificationService;
 
   setUp(() {
     repository = FakeTodoRepository();
+    notificationRepository = FakeNotificationRepository();
+    notificationService = NotificationService(
+      scheduleNotificationUseCase: ScheduleNotificationUseCase(notificationRepository),
+      cancelNotificationUseCase: CancelNotificationUseCase(notificationRepository),
+      requestPermissionUseCase: RequestNotificationPermissionUseCase(notificationRepository),
+      showInstantNotificationUseCase: ShowInstantNotificationUseCase(notificationRepository),
+    );
+
     bloc = TodoBloc(
       getTodosUseCase: GetTodosUseCase(repository),
       addTodoUseCase: AddTodoUseCase(repository),
       toggleTodoUseCase: ToggleTodoUseCase(repository),
       deleteTodoUseCase: DeleteTodoUseCase(repository),
+      notificationService: notificationService,
     );
   });
 

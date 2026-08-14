@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 import '../database/app_database.dart';
+import 'modules/notification_module.dart';
 import 'modules/security_module.dart';
 import 'modules/todo_module.dart';
 
@@ -12,6 +13,7 @@ Future<void> initDependencies() async {
 
   // Core Modules
   initSecurityModule(sl);
+  await initNotificationModule(sl);
 
   // Feature Modules
   initTodoModule(sl);
