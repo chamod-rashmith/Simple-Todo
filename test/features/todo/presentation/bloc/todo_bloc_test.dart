@@ -12,6 +12,7 @@ import 'package:simple_todo/features/todo/domain/usecases/add_todo_usecase.dart'
 import 'package:simple_todo/features/todo/domain/usecases/delete_todo_usecase.dart';
 import 'package:simple_todo/features/todo/domain/usecases/get_todos_usecase.dart';
 import 'package:simple_todo/features/todo/domain/usecases/toggle_todo_usecase.dart';
+import 'package:simple_todo/features/todo/domain/usecases/update_todo_usecase.dart';
 import 'package:simple_todo/features/todo/presentation/bloc/todo_bloc.dart';
 import 'package:simple_todo/features/todo/presentation/bloc/todo_event.dart';
 import 'package:simple_todo/features/todo/presentation/bloc/todo_state.dart';
@@ -25,6 +26,14 @@ class FakeTodoRepository implements TodoRepository {
   @override
   Future<void> addTodo(TodoItemEntity todo) async {
     _todos.insert(0, todo);
+  }
+
+  @override
+  Future<void> updateTodo(TodoItemEntity todo) async {
+    final idx = _todos.indexWhere((t) => t.id == todo.id);
+    if (idx != -1) {
+      _todos[idx] = todo;
+    }
   }
 
   @override
@@ -80,6 +89,7 @@ void main() {
     bloc = TodoBloc(
       getTodosUseCase: GetTodosUseCase(repository),
       addTodoUseCase: AddTodoUseCase(repository),
+      updateTodoUseCase: UpdateTodoUseCase(repository),
       toggleTodoUseCase: ToggleTodoUseCase(repository),
       deleteTodoUseCase: DeleteTodoUseCase(repository),
       notificationService: notificationService,
@@ -98,20 +108,42 @@ void main() {
     final now = DateTime.now();
     await repository.addTodo(TodoItemEntity(
       id: '1',
-      title: 'Test Task',
+      title: 'Buy Groceries',
+      category: 'Personal',
       createdAt: now,
     ));
 
-    bloc.add(LoadTodosEvent());
-
-    await expectLater(
+    expectLater(
       bloc.stream,
       emitsInOrder([
         predicate<TodoState>((s) => s.status == TodoStatus.loading),
-        predicate<TodoState>(
-          (s) => s.status == TodoStatus.loaded && s.todos.length == 1,
-        ),
+        predicate<TodoState>((s) =>
+            s.status == TodoStatus.loaded &&
+            s.todos.length == 1 &&
+            s.todos.first.title == 'Buy Groceries'),
       ]),
     );
+
+    bloc.add(LoadTodosEvent());
+  });
+
+  test('UpdateTodoEvent modifies existing todo in repository and reloads', () async {
+    final now = DateTime.now();
+    final original = TodoItemEntity(
+      id: '1',
+      title: 'Initial Title',
+      category: 'Work',
+      createdAt: now,
+    );
+    await repository.addTodo(original);
+
+    final updated = original.copyWith(title: 'Updated Title', category: 'Design');
+
+    bloc.add(UpdateTodoEvent(updated));
+    await pumpEventQueue();
+
+    final todos = await repository.getTodos();
+    expect(todos.first.title, equals('Updated Title'));
+    expect(todos.first.category, equals('Design'));
   });
 }

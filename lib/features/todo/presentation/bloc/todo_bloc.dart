@@ -6,6 +6,7 @@ import '../../domain/usecases/add_todo_usecase.dart';
 import '../../domain/usecases/delete_todo_usecase.dart';
 import '../../domain/usecases/get_todos_usecase.dart';
 import '../../domain/usecases/toggle_todo_usecase.dart';
+import '../../domain/usecases/update_todo_usecase.dart';
 import 'todo_event.dart';
 import 'todo_state.dart';
 
@@ -14,11 +15,12 @@ import 'todo_state.dart';
 /// ============================================================================
 ///
 /// **Clean Architecture Presentation State Management (BLoC):**
-/// Manages state for todo lists, filtering, searching, task additions, status
+/// Manages state for todo lists, filtering, searching, task additions, updates, status
 /// toggles, deletions, and automated local notification reminders.
 class TodoBloc extends Bloc<TodoEvent, TodoState> {
   final GetTodosUseCase getTodosUseCase;
   final AddTodoUseCase addTodoUseCase;
+  final UpdateTodoUseCase updateTodoUseCase;
   final ToggleTodoUseCase toggleTodoUseCase;
   final DeleteTodoUseCase deleteTodoUseCase;
   final NotificationService notificationService;
@@ -26,12 +28,14 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
   TodoBloc({
     required this.getTodosUseCase,
     required this.addTodoUseCase,
+    required this.updateTodoUseCase,
     required this.toggleTodoUseCase,
     required this.deleteTodoUseCase,
     required this.notificationService,
   }) : super(const TodoState()) {
     on<LoadTodosEvent>(_onLoadTodos);
     on<AddTodoEvent>(_onAddTodo);
+    on<UpdateTodoEvent>(_onUpdateTodo);
     on<ToggleTodoEvent>(_onToggleTodo);
     on<DeleteTodoEvent>(_onDeleteTodo);
     on<FilterTodosEvent>(_onFilterTodos);
@@ -69,6 +73,25 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
       add(LoadTodosEvent());
     } catch (e) {
       emit(state.copyWith(errorMessage: 'Failed to add todo'));
+    }
+  }
+
+  Future<void> _onUpdateTodo(UpdateTodoEvent event, Emitter<TodoState> emit) async {
+    try {
+      // 1. Update task in storage
+      await updateTodoUseCase(event.todo);
+
+      // 2. Reschedule notification reminder if applicable
+      if (!event.todo.isCompleted) {
+        await notificationService.scheduleTodoReminder(event.todo);
+      } else {
+        await notificationService.cancelTodoReminder(event.todo.id);
+      }
+
+      // 3. Reload list
+      add(LoadTodosEvent());
+    } catch (e) {
+      emit(state.copyWith(errorMessage: 'Failed to update todo'));
     }
   }
 

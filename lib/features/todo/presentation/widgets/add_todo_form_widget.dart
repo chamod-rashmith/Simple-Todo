@@ -7,12 +7,15 @@ import 'form/category_picker_chips_widget.dart';
 import 'form/due_date_time_picker_card_widget.dart';
 import 'form/form_section_label_widget.dart';
 import 'form/priority_picker_segmented_widget.dart';
+import 'form/todo_description_markdown_editor.dart';
 
 class AddTodoFormWidget extends StatefulWidget {
+  final TodoItemEntity? initialTodo;
   final ValueChanged<TodoItemEntity> onSubmit;
 
   const AddTodoFormWidget({
     super.key,
+    this.initialTodo,
     required this.onSubmit,
   });
 
@@ -22,14 +25,27 @@ class AddTodoFormWidget extends StatefulWidget {
 
 class _AddTodoFormWidgetState extends State<AddTodoFormWidget> {
   final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
-  final _descriptionController = TextEditingController();
+  late final TextEditingController _titleController;
+  late final TextEditingController _descriptionController;
 
-  String _selectedCategory = 'Personal';
-  TodoPriority _selectedPriority = TodoPriority.medium;
+  late String _selectedCategory;
+  late TodoPriority _selectedPriority;
   DateTime? _selectedDueDate;
 
   final List<String> _categories = ['Personal', 'Work', 'Design', 'Health'];
+
+  bool get isEditing => widget.initialTodo != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final todo = widget.initialTodo;
+    _titleController = TextEditingController(text: todo?.title ?? '');
+    _descriptionController = TextEditingController(text: todo?.description ?? '');
+    _selectedCategory = todo?.category ?? 'Personal';
+    _selectedPriority = todo?.priority ?? TodoPriority.medium;
+    _selectedDueDate = todo?.dueDate;
+  }
 
   @override
   void dispose() {
@@ -43,7 +59,7 @@ class _AddTodoFormWidgetState extends State<AddTodoFormWidget> {
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: initialDate,
-      firstDate: DateTime.now(),
+      firstDate: DateTime.now().subtract(const Duration(days: 30)),
       lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
       builder: (context, child) {
         return Theme(
@@ -103,16 +119,27 @@ class _AddTodoFormWidgetState extends State<AddTodoFormWidget> {
 
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
-      final newTodo = TodoItemEntity(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        title: _titleController.text.trim(),
-        description: _descriptionController.text.trim(),
-        category: _selectedCategory,
-        priority: _selectedPriority,
-        dueDate: _selectedDueDate,
-        createdAt: DateTime.now(),
-      );
-      widget.onSubmit(newTodo);
+      if (isEditing) {
+        final updatedTodo = widget.initialTodo!.copyWith(
+          title: _titleController.text.trim(),
+          description: _descriptionController.text.trim(),
+          category: _selectedCategory,
+          priority: _selectedPriority,
+          dueDate: _selectedDueDate,
+        );
+        widget.onSubmit(updatedTodo);
+      } else {
+        final newTodo = TodoItemEntity(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          title: _titleController.text.trim(),
+          description: _descriptionController.text.trim(),
+          category: _selectedCategory,
+          priority: _selectedPriority,
+          dueDate: _selectedDueDate,
+          createdAt: DateTime.now(),
+        );
+        widget.onSubmit(newTodo);
+      }
     }
   }
 
@@ -127,14 +154,14 @@ class _AddTodoFormWidgetState extends State<AddTodoFormWidget> {
           // Title Input
           TextFormField(
             controller: _titleController,
-            autofocus: true,
+            autofocus: !isEditing,
             style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
             ),
             decoration: const InputDecoration(
-              hintText: 'What needs to be done?',
+              hintText: 'e.g. Design Landing Page',
               labelText: 'Task Title',
             ),
             validator: (val) {
@@ -144,22 +171,17 @@ class _AddTodoFormWidgetState extends State<AddTodoFormWidget> {
               return null;
             },
           ),
-          const SizedBox(height: 16),
-
-          // Description Input
-          TextFormField(
-            controller: _descriptionController,
-            maxLines: 3,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppColors.textPrimary,
-            ),
-            decoration: const InputDecoration(
-              hintText: 'Add additional details or notes...',
-              labelText: 'Description (Optional)',
-            ),
-          ),
           const SizedBox(height: 20),
+
+          // Description Input with Markdown Support
+          const FormSectionLabelWidget(label: 'Notes / Description (Markdown)'),
+          const SizedBox(height: 8),
+          TodoDescriptionMarkdownEditor(
+            controller: _descriptionController,
+            minLines: 12,
+            minHeight: 320,
+          ),
+          const SizedBox(height: 22),
 
           // Category Section
           const FormSectionLabelWidget(label: 'Category'),
@@ -204,14 +226,18 @@ class _AddTodoFormWidgetState extends State<AddTodoFormWidget> {
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.add_task_rounded, size: 20, color: AppColors.white),
-                  SizedBox(width: 8),
+                  Icon(
+                    isEditing ? Icons.save_rounded : Icons.add_task_rounded,
+                    size: 20,
+                    color: AppColors.white,
+                  ),
+                  const SizedBox(width: 8),
                   Text(
-                    'Create Task',
-                    style: TextStyle(
+                    isEditing ? 'Save Changes' : 'Create Task',
+                    style: const TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.2,

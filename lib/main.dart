@@ -1,10 +1,10 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/di/injection_container.dart';
+import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/todo/presentation/bloc/todo_bloc.dart';
 import 'features/todo/presentation/bloc/todo_event.dart';
-import 'features/todo/presentation/pages/todo_dashboard_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,13 +17,13 @@ class SimpleTodoApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Simple Todo',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      home: BlocProvider<TodoBloc>(
-        create: (context) => sl<TodoBloc>()..add(LoadTodosEvent()),
-        child: const TodoDashboardPage(),
+    return BlocProvider<TodoBloc>(
+      create: (context) => sl<TodoBloc>()..add(LoadTodosEvent()),
+      child: MaterialApp.router(
+        title: 'Simple Todo',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        routerConfig: appRouter,
       ),
     );
   }

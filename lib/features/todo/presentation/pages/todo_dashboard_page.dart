@@ -1,3 +1,4 @@
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -11,17 +12,10 @@ import '../widgets/todo_header_widget.dart';
 import '../widgets/todo_item_tile_widget.dart';
 import '../widgets/todo_shimmer_loading_widget.dart';
 import '../widgets/todo_stats_banner_widget.dart';
-import 'create_todo_modal.dart';
+import '../widgets/todo_detail_modal.dart';
 
 class TodoDashboardPage extends StatelessWidget {
   const TodoDashboardPage({super.key});
-
-  Future<void> _openCreateTodoModal(BuildContext context) async {
-    final newTodo = await CreateTodoModal.show(context);
-    if (newTodo != null && context.mounted) {
-      context.read<TodoBloc>().add(AddTodoEvent(newTodo));
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +115,7 @@ class TodoDashboardPage extends StatelessWidget {
                     SliverFillRemaining(
                       hasScrollBody: false,
                       child: TodoEmptyStateWidget(
-                        onAction: () => _openCreateTodoModal(context),
+                        onAction: () => context.push('/create'),
                       ),
                     )
                   else
@@ -137,6 +131,14 @@ class TodoDashboardPage extends StatelessWidget {
                                    bloc.add(ToggleTodoEvent(todo.id)),
                               onDelete: () =>
                                   bloc.add(DeleteTodoEvent(todo.id)),
+                              onTap: () => TodoDetailModal.show(
+                                context,
+                                todo: todo,
+                                onToggle: () =>
+                                    bloc.add(ToggleTodoEvent(todo.id)),
+                                onDelete: () =>
+                                    bloc.add(DeleteTodoEvent(todo.id)),
+                              ),
                             );
                           },
                           childCount: state.filteredTodos.length,
@@ -154,7 +156,7 @@ class TodoDashboardPage extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _openCreateTodoModal(context),
+        onPressed: () => context.push('/create'),
         backgroundColor: AppColors.black,
         foregroundColor: AppColors.white,
         elevation: 6,

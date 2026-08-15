@@ -5,6 +5,7 @@ import '../models/todo_item_model.dart';
 abstract class TodoLocalDataSource {
   Future<List<TodoItemModel>> getTodos();
   Future<void> addTodo(TodoItemModel model);
+  Future<void> updateTodo(TodoItemModel model);
   Future<void> toggleTodoStatus(String id);
   Future<void> deleteTodo(String id);
 }
@@ -50,6 +51,22 @@ class TodoLocalDataSourceImpl implements TodoLocalDataSource {
             createdAt: model.createdAt,
           ),
         );
+  }
+
+  @override
+  Future<void> updateTodo(TodoItemModel model) async {
+    await (database.update(database.todoItemEntries)
+          ..where((t) => t.id.equals(model.id)))
+        .write(
+      TodoItemEntriesCompanion(
+        title: Value(model.title),
+        description: Value(model.description),
+        category: Value(model.category),
+        priority: Value(model.priority),
+        dueDate: Value(model.dueDate),
+        isCompleted: Value(model.isCompleted),
+      ),
+    );
   }
 
   @override

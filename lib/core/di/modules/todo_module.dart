@@ -7,6 +7,7 @@ import '../../../features/todo/domain/usecases/add_todo_usecase.dart';
 import '../../../features/todo/domain/usecases/delete_todo_usecase.dart';
 import '../../../features/todo/domain/usecases/get_todos_usecase.dart';
 import '../../../features/todo/domain/usecases/toggle_todo_usecase.dart';
+import '../../../features/todo/domain/usecases/update_todo_usecase.dart';
 import '../../../features/todo/presentation/bloc/todo_bloc.dart';
 import '../../database/app_database.dart';
 
@@ -28,6 +29,9 @@ void initTodoModule(GetIt sl) {
   sl.registerLazySingleton<AddTodoUseCase>(
     () => AddTodoUseCase(sl<TodoRepository>()),
   );
+  sl.registerLazySingleton<UpdateTodoUseCase>(
+    () => UpdateTodoUseCase(sl<TodoRepository>()),
+  );
   sl.registerLazySingleton<ToggleTodoUseCase>(
     () => ToggleTodoUseCase(sl<TodoRepository>()),
   );
@@ -40,6 +44,7 @@ void initTodoModule(GetIt sl) {
     () => TodoBloc(
       getTodosUseCase: sl(),
       addTodoUseCase: sl(),
+      updateTodoUseCase: sl(),
       toggleTodoUseCase: sl(),
       deleteTodoUseCase: sl(),
       notificationService: sl(),

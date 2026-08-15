@@ -18,6 +18,14 @@ class AddTodoEvent extends TodoEvent {
   List<Object?> get props => [todo];
 }
 
+class UpdateTodoEvent extends TodoEvent {
+  final TodoItemEntity todo;
+  const UpdateTodoEvent(this.todo);
+
+  @override
+  List<Object?> get props => [todo];
+}
+
 class ToggleTodoEvent extends TodoEvent {
   final String id;
   const ToggleTodoEvent(this.id);

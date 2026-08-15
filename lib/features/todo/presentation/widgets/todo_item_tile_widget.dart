@@ -1,18 +1,21 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_markdown_view.dart';
 import '../../domain/entities/todo_item.dart';
 
 class TodoItemTileWidget extends StatelessWidget {
   final TodoItemEntity todo;
   final VoidCallback onToggle;
   final VoidCallback onDelete;
+  final VoidCallback? onTap;
 
   const TodoItemTileWidget({
     super.key,
     required this.todo,
     required this.onToggle,
     required this.onDelete,
+    this.onTap,
   });
 
   Widget _buildPriorityBadge(TodoPriority priority) {
@@ -127,36 +130,39 @@ class TodoItemTileWidget extends StatelessWidget {
           ],
         ),
         child: InkWell(
-          onTap: onToggle,
+          onTap: onTap ?? onToggle,
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Custom Monochromatic Animated Checkbox
-                Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeInOut,
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: todo.isCompleted ? AppColors.black : Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: todo.isCompleted ? AppColors.black : AppColors.outlineVariant,
-                        width: 1.8,
+                // Custom Monochromatic Animated Checkbox with isolated tap handler
+                GestureDetector(
+                  onTap: onToggle,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeInOut,
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: todo.isCompleted ? AppColors.black : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: todo.isCompleted ? AppColors.black : AppColors.outlineVariant,
+                          width: 1.8,
+                        ),
                       ),
+                      child: todo.isCompleted
+                          ? const Icon(
+                              Icons.check_rounded,
+                              size: 16,
+                              color: AppColors.white,
+                            )
+                          : null,
                     ),
-                    child: todo.isCompleted
-                        ? const Icon(
-                            Icons.check_rounded,
-                            size: 16,
-                            color: AppColors.white,
-                          )
-                        : null,
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -183,19 +189,19 @@ class TodoItemTileWidget extends StatelessWidget {
                         ),
                       ),
 
-                      // Description
-                      if (todo.description.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          todo.description,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: todo.isCompleted
-                                ? AppColors.textSubtle.withValues(alpha: 0.7)
-                                : AppColors.textSecondary,
-                            height: 1.35,
+                      // Markdown Description (compact on tile)
+                      if (todo.description.trim().isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        IgnorePointer(
+                          child: AppMarkdownView(
+                            markdown: todo.description,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: todo.isCompleted
+                                  ? AppColors.textSubtle.withValues(alpha: 0.7)
+                                  : AppColors.textSecondary,
+                              height: 1.35,
+                            ),
                           ),
                         ),
                       ],
@@ -236,8 +242,8 @@ class TodoItemTileWidget extends StatelessWidget {
                                 color: isPastDue
                                     ? AppColors.black
                                     : AppColors.surfaceContainerLow,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
