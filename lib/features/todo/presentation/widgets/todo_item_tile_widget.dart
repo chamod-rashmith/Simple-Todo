@@ -72,13 +72,30 @@ class TodoItemTileWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final formattedDate = todo.dueDate != null
+    final now = DateTime.now();
+    final tomorrow = now.add(const Duration(days: 1));
+
+    // Formatted Assigned Date
+    String? assignedDateText;
+    final assigned = todo.assignedDate;
+    if (assigned != null) {
+      if (todo.isAssignedToday) {
+        assignedDateText = 'Today';
+      } else if (assigned.year == tomorrow.year &&
+          assigned.month == tomorrow.month &&
+          assigned.day == tomorrow.day) {
+        assignedDateText = 'Tomorrow';
+      } else {
+        assignedDateText = DateFormat('MMM d').format(assigned);
+      }
+    }
+
+    // Formatted Deadline / Due Date
+    final formattedDueDate = todo.dueDate != null
         ? DateFormat('MMM d, h:mm a').format(todo.dueDate!)
         : null;
 
-    final isPastDue = todo.dueDate != null &&
-        todo.dueDate!.isBefore(DateTime.now()) &&
-        !todo.isCompleted;
+    final isPastDue = todo.isOverdue;
 
     return Dismissible(
       key: Key(todo.id),
@@ -208,7 +225,7 @@ class TodoItemTileWidget extends StatelessWidget {
 
                       const SizedBox(height: 10),
 
-                      // Metadata Tags Row (Category, Priority, Due Date)
+                      // Metadata Tags Row (Category, Priority, Assigned Date, Deadline)
                       Wrap(
                         crossAxisAlignment: WrapCrossAlignment.center,
                         spacing: 8,
@@ -234,16 +251,53 @@ class TodoItemTileWidget extends StatelessWidget {
                           // Priority Badge
                           _buildPriorityBadge(todo.priority),
 
+                          // Assigned Date Badge
+                          if (assignedDateText != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: todo.isAssignedToday
+                                    ? AppColors.surfaceDark
+                                    : AppColors.surfaceContainerLow,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today_rounded,
+                                    size: 11,
+                                    color: todo.isAssignedToday
+                                        ? AppColors.white
+                                        : AppColors.textMuted,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    assignedDateText,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: todo.isAssignedToday
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
+                                      color: todo.isAssignedToday
+                                          ? AppColors.white
+                                          : AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
                           // Due Date / Overdue Indicator
-                          if (formattedDate != null)
+                          if (formattedDueDate != null)
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
                                 color: isPastDue
-                                    ? AppColors.black
+                                    ? AppColors.error
                                     : AppColors.surfaceContainerLow,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -254,7 +308,7 @@ class TodoItemTileWidget extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    isPastDue ? 'OVERDUE ($formattedDate)' : formattedDate,
+                                    isPastDue ? 'OVERDUE ($formattedDueDate)' : 'Due: $formattedDueDate',
                                     style: TextStyle(
                                       fontSize: 11,
                                       fontWeight: isPastDue ? FontWeight.w700 : FontWeight.w500,

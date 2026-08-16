@@ -146,4 +146,84 @@ void main() {
     expect(todos.first.title, equals('Updated Title'));
     expect(todos.first.category, equals('Design'));
   });
+
+  test('Daily progress calculates stats correctly for today tasks', () async {
+    final now = DateTime.now();
+    final tomorrow = now.add(const Duration(days: 1));
+
+    // Task 1: Assigned for today, completed
+    await repository.addTodo(TodoItemEntity(
+      id: '1',
+      title: 'Today Task Done',
+      assignedDate: now,
+      isCompleted: true,
+      createdAt: now,
+    ));
+
+    // Task 2: Assigned for today, incomplete
+    await repository.addTodo(TodoItemEntity(
+      id: '2',
+      title: 'Today Task Pending',
+      assignedDate: now,
+      isCompleted: false,
+      createdAt: now,
+    ));
+
+    // Task 3: Assigned for tomorrow (should NOT count towards today's daily progress)
+    await repository.addTodo(TodoItemEntity(
+      id: '3',
+      title: 'Tomorrow Task',
+      assignedDate: tomorrow,
+      isCompleted: false,
+      createdAt: now,
+    ));
+
+    bloc.add(LoadTodosEvent());
+    await pumpEventQueue();
+
+    expect(bloc.state.todos.length, equals(3));
+    expect(bloc.state.todayTotalCount, equals(2));
+    expect(bloc.state.todayCompletedCount, equals(1));
+    expect(bloc.state.todayCompletionRatio, equals(0.5));
+  });
+
+  test('FilterDateEvent filters todos by today and upcoming', () async {
+    final now = DateTime.now();
+    final tomorrow = now.add(const Duration(days: 1));
+
+    await repository.addTodo(TodoItemEntity(
+      id: '1',
+      title: 'Today Task',
+      assignedDate: now,
+      createdAt: now,
+    ));
+
+    await repository.addTodo(TodoItemEntity(
+      id: '2',
+      title: 'Tomorrow Task',
+      assignedDate: tomorrow,
+      createdAt: now,
+    ));
+
+    bloc.add(LoadTodosEvent());
+    await pumpEventQueue();
+
+    // Filter by Today
+    bloc.add(const FilterDateEvent('today'));
+    await pumpEventQueue();
+    expect(bloc.state.filteredTodos.length, equals(1));
+    expect(bloc.state.filteredTodos.first.title, equals('Today Task'));
+
+    // Filter by Upcoming
+    bloc.add(const FilterDateEvent('upcoming'));
+    await pumpEventQueue();
+    expect(bloc.state.filteredTodos.length, equals(1));
+    expect(bloc.state.filteredTodos.first.title, equals('Tomorrow Task'));
+
+    // Filter by All
+    bloc.add(const FilterDateEvent('all'));
+    await pumpEventQueue();
+    expect(bloc.state.filteredTodos.length, equals(2));
+  });
 }
+

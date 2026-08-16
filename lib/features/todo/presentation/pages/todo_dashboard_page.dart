@@ -6,6 +6,7 @@ import '../bloc/todo_bloc.dart';
 import '../bloc/todo_event.dart';
 import '../bloc/todo_state.dart';
 import '../widgets/todo_category_selector_widget.dart';
+import '../widgets/todo_date_filter_bar_widget.dart';
 import '../widgets/todo_empty_state_widget.dart';
 import '../widgets/todo_filter_bar_widget.dart';
 import '../widgets/todo_header_widget.dart';
@@ -61,22 +62,34 @@ class TodoDashboardPage extends StatelessWidget {
                     ),
                   ),
 
-                  // Progress Summary Hero Banner
+                  // Today's Daily Progress Summary Hero Banner
                   if (state.totalCount > 0)
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       sliver: SliverToBoxAdapter(
                         child: TodoStatsBannerWidget(
-                          completedCount: state.completedCount,
-                          totalCount: state.totalCount,
-                          ratio: state.completionRatio,
+                          completedCount: state.todayCompletedCount,
+                          totalCount: state.todayTotalCount,
+                          ratio: state.todayCompletionRatio,
                         ),
                       ),
                     ),
 
+                  // Date Filter Bar (All Dates / Today / Upcoming / Overdue)
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                    sliver: SliverToBoxAdapter(
+                      child: TodoDateFilterBarWidget(
+                        activeDateFilter: state.dateFilter,
+                        onDateFilterChanged: (dFilter) =>
+                            bloc.add(FilterDateEvent(dFilter)),
+                      ),
+                    ),
+                  ),
+
                   // Category Selector Carousel
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                    padding: const EdgeInsets.fromLTRB(20, 14, 20, 12),
                     sliver: SliverToBoxAdapter(
                       child: TodoCategorySelectorWidget(
                         categories: state.availableCategories,

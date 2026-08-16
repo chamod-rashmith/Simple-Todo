@@ -75,6 +75,17 @@ class $TodoItemEntriesTable extends TodoItemEntries
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _assignedDateMeta = const VerificationMeta(
+    'assignedDate',
+  );
+  @override
+  late final GeneratedColumn<String> assignedDate = GeneratedColumn<String>(
+    'assigned_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _dueDateMeta = const VerificationMeta(
     'dueDate',
   );
@@ -105,6 +116,7 @@ class $TodoItemEntriesTable extends TodoItemEntries
     category,
     isCompleted,
     priority,
+    assignedDate,
     dueDate,
     createdAt,
   ];
@@ -169,6 +181,15 @@ class $TodoItemEntriesTable extends TodoItemEntries
     } else if (isInserting) {
       context.missing(_priorityMeta);
     }
+    if (data.containsKey('assigned_date')) {
+      context.handle(
+        _assignedDateMeta,
+        assignedDate.isAcceptableOrUnknown(
+          data['assigned_date']!,
+          _assignedDateMeta,
+        ),
+      );
+    }
     if (data.containsKey('due_date')) {
       context.handle(
         _dueDateMeta,
@@ -216,6 +237,10 @@ class $TodoItemEntriesTable extends TodoItemEntries
         DriftSqlType.string,
         data['${effectivePrefix}priority'],
       )!,
+      assignedDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}assigned_date'],
+      ),
       dueDate: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}due_date'],
@@ -240,6 +265,7 @@ class TodoItemEntry extends DataClass implements Insertable<TodoItemEntry> {
   final String category;
   final bool isCompleted;
   final String priority;
+  final String? assignedDate;
   final String? dueDate;
   final String createdAt;
   const TodoItemEntry({
@@ -249,6 +275,7 @@ class TodoItemEntry extends DataClass implements Insertable<TodoItemEntry> {
     required this.category,
     required this.isCompleted,
     required this.priority,
+    this.assignedDate,
     this.dueDate,
     required this.createdAt,
   });
@@ -261,6 +288,9 @@ class TodoItemEntry extends DataClass implements Insertable<TodoItemEntry> {
     map['category'] = Variable<String>(category);
     map['is_completed'] = Variable<bool>(isCompleted);
     map['priority'] = Variable<String>(priority);
+    if (!nullToAbsent || assignedDate != null) {
+      map['assigned_date'] = Variable<String>(assignedDate);
+    }
     if (!nullToAbsent || dueDate != null) {
       map['due_date'] = Variable<String>(dueDate);
     }
@@ -276,6 +306,9 @@ class TodoItemEntry extends DataClass implements Insertable<TodoItemEntry> {
       category: Value(category),
       isCompleted: Value(isCompleted),
       priority: Value(priority),
+      assignedDate: assignedDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(assignedDate),
       dueDate: dueDate == null && nullToAbsent
           ? const Value.absent()
           : Value(dueDate),
@@ -295,6 +328,7 @@ class TodoItemEntry extends DataClass implements Insertable<TodoItemEntry> {
       category: serializer.fromJson<String>(json['category']),
       isCompleted: serializer.fromJson<bool>(json['isCompleted']),
       priority: serializer.fromJson<String>(json['priority']),
+      assignedDate: serializer.fromJson<String?>(json['assignedDate']),
       dueDate: serializer.fromJson<String?>(json['dueDate']),
       createdAt: serializer.fromJson<String>(json['createdAt']),
     );
@@ -309,6 +343,7 @@ class TodoItemEntry extends DataClass implements Insertable<TodoItemEntry> {
       'category': serializer.toJson<String>(category),
       'isCompleted': serializer.toJson<bool>(isCompleted),
       'priority': serializer.toJson<String>(priority),
+      'assignedDate': serializer.toJson<String?>(assignedDate),
       'dueDate': serializer.toJson<String?>(dueDate),
       'createdAt': serializer.toJson<String>(createdAt),
     };
@@ -321,6 +356,7 @@ class TodoItemEntry extends DataClass implements Insertable<TodoItemEntry> {
     String? category,
     bool? isCompleted,
     String? priority,
+    Value<String?> assignedDate = const Value.absent(),
     Value<String?> dueDate = const Value.absent(),
     String? createdAt,
   }) => TodoItemEntry(
@@ -330,6 +366,7 @@ class TodoItemEntry extends DataClass implements Insertable<TodoItemEntry> {
     category: category ?? this.category,
     isCompleted: isCompleted ?? this.isCompleted,
     priority: priority ?? this.priority,
+    assignedDate: assignedDate.present ? assignedDate.value : this.assignedDate,
     dueDate: dueDate.present ? dueDate.value : this.dueDate,
     createdAt: createdAt ?? this.createdAt,
   );
@@ -345,6 +382,9 @@ class TodoItemEntry extends DataClass implements Insertable<TodoItemEntry> {
           ? data.isCompleted.value
           : this.isCompleted,
       priority: data.priority.present ? data.priority.value : this.priority,
+      assignedDate: data.assignedDate.present
+          ? data.assignedDate.value
+          : this.assignedDate,
       dueDate: data.dueDate.present ? data.dueDate.value : this.dueDate,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
@@ -359,6 +399,7 @@ class TodoItemEntry extends DataClass implements Insertable<TodoItemEntry> {
           ..write('category: $category, ')
           ..write('isCompleted: $isCompleted, ')
           ..write('priority: $priority, ')
+          ..write('assignedDate: $assignedDate, ')
           ..write('dueDate: $dueDate, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
@@ -373,6 +414,7 @@ class TodoItemEntry extends DataClass implements Insertable<TodoItemEntry> {
     category,
     isCompleted,
     priority,
+    assignedDate,
     dueDate,
     createdAt,
   );
@@ -386,6 +428,7 @@ class TodoItemEntry extends DataClass implements Insertable<TodoItemEntry> {
           other.category == this.category &&
           other.isCompleted == this.isCompleted &&
           other.priority == this.priority &&
+          other.assignedDate == this.assignedDate &&
           other.dueDate == this.dueDate &&
           other.createdAt == this.createdAt);
 }
@@ -397,6 +440,7 @@ class TodoItemEntriesCompanion extends UpdateCompanion<TodoItemEntry> {
   final Value<String> category;
   final Value<bool> isCompleted;
   final Value<String> priority;
+  final Value<String?> assignedDate;
   final Value<String?> dueDate;
   final Value<String> createdAt;
   final Value<int> rowid;
@@ -407,6 +451,7 @@ class TodoItemEntriesCompanion extends UpdateCompanion<TodoItemEntry> {
     this.category = const Value.absent(),
     this.isCompleted = const Value.absent(),
     this.priority = const Value.absent(),
+    this.assignedDate = const Value.absent(),
     this.dueDate = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -418,6 +463,7 @@ class TodoItemEntriesCompanion extends UpdateCompanion<TodoItemEntry> {
     required String category,
     this.isCompleted = const Value.absent(),
     required String priority,
+    this.assignedDate = const Value.absent(),
     this.dueDate = const Value.absent(),
     required String createdAt,
     this.rowid = const Value.absent(),
@@ -434,6 +480,7 @@ class TodoItemEntriesCompanion extends UpdateCompanion<TodoItemEntry> {
     Expression<String>? category,
     Expression<bool>? isCompleted,
     Expression<String>? priority,
+    Expression<String>? assignedDate,
     Expression<String>? dueDate,
     Expression<String>? createdAt,
     Expression<int>? rowid,
@@ -445,6 +492,7 @@ class TodoItemEntriesCompanion extends UpdateCompanion<TodoItemEntry> {
       if (category != null) 'category': category,
       if (isCompleted != null) 'is_completed': isCompleted,
       if (priority != null) 'priority': priority,
+      if (assignedDate != null) 'assigned_date': assignedDate,
       if (dueDate != null) 'due_date': dueDate,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
@@ -458,6 +506,7 @@ class TodoItemEntriesCompanion extends UpdateCompanion<TodoItemEntry> {
     Value<String>? category,
     Value<bool>? isCompleted,
     Value<String>? priority,
+    Value<String?>? assignedDate,
     Value<String?>? dueDate,
     Value<String>? createdAt,
     Value<int>? rowid,
@@ -469,6 +518,7 @@ class TodoItemEntriesCompanion extends UpdateCompanion<TodoItemEntry> {
       category: category ?? this.category,
       isCompleted: isCompleted ?? this.isCompleted,
       priority: priority ?? this.priority,
+      assignedDate: assignedDate ?? this.assignedDate,
       dueDate: dueDate ?? this.dueDate,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
@@ -496,6 +546,9 @@ class TodoItemEntriesCompanion extends UpdateCompanion<TodoItemEntry> {
     if (priority.present) {
       map['priority'] = Variable<String>(priority.value);
     }
+    if (assignedDate.present) {
+      map['assigned_date'] = Variable<String>(assignedDate.value);
+    }
     if (dueDate.present) {
       map['due_date'] = Variable<String>(dueDate.value);
     }
@@ -517,6 +570,7 @@ class TodoItemEntriesCompanion extends UpdateCompanion<TodoItemEntry> {
           ..write('category: $category, ')
           ..write('isCompleted: $isCompleted, ')
           ..write('priority: $priority, ')
+          ..write('assignedDate: $assignedDate, ')
           ..write('dueDate: $dueDate, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
@@ -546,6 +600,7 @@ typedef $$TodoItemEntriesTableCreateCompanionBuilder =
       required String category,
       Value<bool> isCompleted,
       required String priority,
+      Value<String?> assignedDate,
       Value<String?> dueDate,
       required String createdAt,
       Value<int> rowid,
@@ -558,6 +613,7 @@ typedef $$TodoItemEntriesTableUpdateCompanionBuilder =
       Value<String> category,
       Value<bool> isCompleted,
       Value<String> priority,
+      Value<String?> assignedDate,
       Value<String?> dueDate,
       Value<String> createdAt,
       Value<int> rowid,
@@ -599,6 +655,11 @@ class $$TodoItemEntriesTableFilterComposer
 
   ColumnFilters<String> get priority => $composableBuilder(
     column: $table.priority,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get assignedDate => $composableBuilder(
+    column: $table.assignedDate,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -652,6 +713,11 @@ class $$TodoItemEntriesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get assignedDate => $composableBuilder(
+    column: $table.assignedDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get dueDate => $composableBuilder(
     column: $table.dueDate,
     builder: (column) => ColumnOrderings(column),
@@ -693,6 +759,11 @@ class $$TodoItemEntriesTableAnnotationComposer
 
   GeneratedColumn<String> get priority =>
       $composableBuilder(column: $table.priority, builder: (column) => column);
+
+  GeneratedColumn<String> get assignedDate => $composableBuilder(
+    column: $table.assignedDate,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get dueDate =>
       $composableBuilder(column: $table.dueDate, builder: (column) => column);
@@ -740,6 +811,7 @@ class $$TodoItemEntriesTableTableManager
                 Value<String> category = const Value.absent(),
                 Value<bool> isCompleted = const Value.absent(),
                 Value<String> priority = const Value.absent(),
+                Value<String?> assignedDate = const Value.absent(),
                 Value<String?> dueDate = const Value.absent(),
                 Value<String> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -750,6 +822,7 @@ class $$TodoItemEntriesTableTableManager
                 category: category,
                 isCompleted: isCompleted,
                 priority: priority,
+                assignedDate: assignedDate,
                 dueDate: dueDate,
                 createdAt: createdAt,
                 rowid: rowid,
@@ -762,6 +835,7 @@ class $$TodoItemEntriesTableTableManager
                 required String category,
                 Value<bool> isCompleted = const Value.absent(),
                 required String priority,
+                Value<String?> assignedDate = const Value.absent(),
                 Value<String?> dueDate = const Value.absent(),
                 required String createdAt,
                 Value<int> rowid = const Value.absent(),
@@ -772,6 +846,7 @@ class $$TodoItemEntriesTableTableManager
                 category: category,
                 isCompleted: isCompleted,
                 priority: priority,
+                assignedDate: assignedDate,
                 dueDate: dueDate,
                 createdAt: createdAt,
                 rowid: rowid,

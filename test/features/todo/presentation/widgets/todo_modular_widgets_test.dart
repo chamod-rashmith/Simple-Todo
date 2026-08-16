@@ -2,9 +2,11 @@ import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:simple_todo/core/theme/app_theme.dart';
 import 'package:simple_todo/features/todo/domain/entities/todo_item.dart';
+import 'package:simple_todo/features/todo/presentation/widgets/form/assigned_date_picker_card_widget.dart';
 import 'package:simple_todo/features/todo/presentation/widgets/form/category_picker_chips_widget.dart';
 import 'package:simple_todo/features/todo/presentation/widgets/form/priority_picker_segmented_widget.dart';
 import 'package:simple_todo/features/todo/presentation/widgets/todo_category_selector_widget.dart';
+import 'package:simple_todo/features/todo/presentation/widgets/todo_date_filter_bar_widget.dart';
 import 'package:simple_todo/features/todo/presentation/widgets/todo_empty_state_widget.dart';
 import 'package:simple_todo/features/todo/presentation/widgets/todo_filter_bar_widget.dart';
 import 'package:simple_todo/features/todo/presentation/widgets/todo_header_widget.dart';
@@ -52,7 +54,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('60%'), findsOneWidget);
-      expect(find.text('3 of 5 tasks completed'), findsOneWidget);
+      expect(find.text('3 of 5 tasks completed today'), findsOneWidget);
       expect(find.byType(LinearProgressIndicator), findsOneWidget);
     });
 
@@ -209,6 +211,66 @@ void main() {
       await tester.tap(find.text('HIGH'));
       await tester.pumpAndSettle();
       expect(priority, equals(TodoPriority.high));
+    });
+
+    testWidgets('AssignedDatePickerCardWidget allows switching between Today, Tomorrow', (tester) async {
+      DateTime? selectedDate = DateTime.now();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: StatefulBuilder(
+            builder: (context, setState) {
+              return Scaffold(
+                body: AssignedDatePickerCardWidget(
+                  selectedAssignedDate: selectedDate,
+                  onDateChanged: (d) => setState(() => selectedDate = d),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Today'), findsOneWidget);
+      expect(find.text('Tomorrow'), findsOneWidget);
+
+      await tester.tap(find.text('Tomorrow'));
+      await tester.pumpAndSettle();
+
+      final tomorrow = DateTime.now().add(const Duration(days: 1));
+      expect(selectedDate?.day, equals(tomorrow.day));
+    });
+
+    testWidgets('TodoDateFilterBarWidget triggers onDateFilterChanged on filter chip tap', (tester) async {
+      String activeDateFilter = 'all';
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: StatefulBuilder(
+            builder: (context, setState) {
+              return Scaffold(
+                body: TodoDateFilterBarWidget(
+                  activeDateFilter: activeDateFilter,
+                  onDateFilterChanged: (filter) => setState(() => activeDateFilter = filter),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('All Dates'), findsOneWidget);
+      expect(find.text('Today'), findsOneWidget);
+      expect(find.text('Upcoming'), findsOneWidget);
+      expect(find.text('Overdue'), findsOneWidget);
+
+      await tester.tap(find.text('Upcoming'));
+      await tester.pumpAndSettle();
+      expect(activeDateFilter, equals('upcoming'));
     });
   });
 }

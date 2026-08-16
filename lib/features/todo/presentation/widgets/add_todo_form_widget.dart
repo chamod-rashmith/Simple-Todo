@@ -3,6 +3,7 @@ import '../../../../core/di/injection_container.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/todo_item.dart';
+import 'form/assigned_date_picker_card_widget.dart';
 import 'form/category_picker_chips_widget.dart';
 import 'form/due_date_time_picker_card_widget.dart';
 import 'form/form_section_label_widget.dart';
@@ -30,6 +31,7 @@ class _AddTodoFormWidgetState extends State<AddTodoFormWidget> {
 
   late String _selectedCategory;
   late TodoPriority _selectedPriority;
+  DateTime? _selectedAssignedDate;
   DateTime? _selectedDueDate;
 
   final List<String> _categories = ['Personal', 'Work', 'Design', 'Health'];
@@ -44,6 +46,7 @@ class _AddTodoFormWidgetState extends State<AddTodoFormWidget> {
     _descriptionController = TextEditingController(text: todo?.description ?? '');
     _selectedCategory = todo?.category ?? 'Personal';
     _selectedPriority = todo?.priority ?? TodoPriority.medium;
+    _selectedAssignedDate = todo?.assignedDate ?? (isEditing ? null : DateTime.now());
     _selectedDueDate = todo?.dueDate;
   }
 
@@ -55,7 +58,7 @@ class _AddTodoFormWidgetState extends State<AddTodoFormWidget> {
   }
 
   Future<void> _pickDueDateTime() async {
-    final initialDate = _selectedDueDate ?? DateTime.now();
+    final initialDate = _selectedDueDate ?? _selectedAssignedDate ?? DateTime.now();
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: initialDate,
@@ -79,7 +82,7 @@ class _AddTodoFormWidgetState extends State<AddTodoFormWidget> {
 
     final initialTime = _selectedDueDate != null
         ? TimeOfDay(hour: _selectedDueDate!.hour, minute: _selectedDueDate!.minute)
-        : TimeOfDay.now();
+        : const TimeOfDay(hour: 18, minute: 0);
 
     final pickedTime = await showTimePicker(
       context: context,
@@ -125,6 +128,7 @@ class _AddTodoFormWidgetState extends State<AddTodoFormWidget> {
           description: _descriptionController.text.trim(),
           category: _selectedCategory,
           priority: _selectedPriority,
+          assignedDate: _selectedAssignedDate,
           dueDate: _selectedDueDate,
         );
         widget.onSubmit(updatedTodo);
@@ -135,6 +139,7 @@ class _AddTodoFormWidgetState extends State<AddTodoFormWidget> {
           description: _descriptionController.text.trim(),
           category: _selectedCategory,
           priority: _selectedPriority,
+          assignedDate: _selectedAssignedDate ?? DateTime.now(),
           dueDate: _selectedDueDate,
           createdAt: DateTime.now(),
         );
@@ -161,7 +166,7 @@ class _AddTodoFormWidgetState extends State<AddTodoFormWidget> {
               color: AppColors.textPrimary,
             ),
             decoration: const InputDecoration(
-              hintText: 'e.g. Design Landing Page',
+              hintText: 'e.g. Design Landing Page or Submit Assignment',
               labelText: 'Task Title',
             ),
             validator: (val) {
@@ -183,6 +188,25 @@ class _AddTodoFormWidgetState extends State<AddTodoFormWidget> {
           ),
           const SizedBox(height: 22),
 
+          // Task Assigned Date (When should this task be done?)
+          const FormSectionLabelWidget(label: 'Schedule / Assigned Day'),
+          const SizedBox(height: 8),
+          AssignedDatePickerCardWidget(
+            selectedAssignedDate: _selectedAssignedDate,
+            onDateChanged: (d) => setState(() => _selectedAssignedDate = d),
+          ),
+          const SizedBox(height: 20),
+
+          // Due Date & Notification Reminder
+          const FormSectionLabelWidget(label: 'Deadline & Reminder (Optional)'),
+          const SizedBox(height: 8),
+          DueDateTimePickerCardWidget(
+            selectedDueDate: _selectedDueDate,
+            onTap: _pickDueDateTime,
+            onClear: () => setState(() => _selectedDueDate = null),
+          ),
+          const SizedBox(height: 20),
+
           // Category Section
           const FormSectionLabelWidget(label: 'Category'),
           const SizedBox(height: 8),
@@ -199,16 +223,6 @@ class _AddTodoFormWidgetState extends State<AddTodoFormWidget> {
           PriorityPickerSegmentedWidget(
             selectedPriority: _selectedPriority,
             onSelected: (p) => setState(() => _selectedPriority = p),
-          ),
-          const SizedBox(height: 20),
-
-          // Due Date & Notification Reminder
-          const FormSectionLabelWidget(label: 'Reminder & Deadline'),
-          const SizedBox(height: 8),
-          DueDateTimePickerCardWidget(
-            selectedDueDate: _selectedDueDate,
-            onTap: _pickDueDateTime,
-            onClear: () => setState(() => _selectedDueDate = null),
           ),
           const SizedBox(height: 28),
 

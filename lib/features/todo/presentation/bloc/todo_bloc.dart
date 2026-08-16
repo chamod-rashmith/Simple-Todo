@@ -39,6 +39,7 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
     on<ToggleTodoEvent>(_onToggleTodo);
     on<DeleteTodoEvent>(_onDeleteTodo);
     on<FilterTodosEvent>(_onFilterTodos);
+    on<FilterDateEvent>(_onFilterDate);
     on<SelectCategoryEvent>(_onSelectCategory);
     on<SearchQueryEvent>(_onSearchQuery);
   }
@@ -47,7 +48,13 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
     emit(state.copyWith(status: TodoStatus.loading));
     try {
       final todos = await getTodosUseCase(NoParams());
-      final filtered = _applyFilters(todos, state.activeFilter, state.selectedCategory, state.searchQuery);
+      final filtered = _applyFilters(
+        todos,
+        state.activeFilter,
+        state.dateFilter,
+        state.selectedCategory,
+        state.searchQuery,
+      );
       emit(state.copyWith(
         status: TodoStatus.loaded,
         todos: todos,
@@ -130,15 +137,41 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
   }
 
   void _onFilterTodos(FilterTodosEvent event, Emitter<TodoState> emit) {
-    final filtered = _applyFilters(state.todos, event.filter, state.selectedCategory, state.searchQuery);
+    final filtered = _applyFilters(
+      state.todos,
+      event.filter,
+      state.dateFilter,
+      state.selectedCategory,
+      state.searchQuery,
+    );
     emit(state.copyWith(
       activeFilter: event.filter,
       filteredTodos: filtered,
     ));
   }
 
+  void _onFilterDate(FilterDateEvent event, Emitter<TodoState> emit) {
+    final filtered = _applyFilters(
+      state.todos,
+      state.activeFilter,
+      event.dateFilter,
+      state.selectedCategory,
+      state.searchQuery,
+    );
+    emit(state.copyWith(
+      dateFilter: event.dateFilter,
+      filteredTodos: filtered,
+    ));
+  }
+
   void _onSelectCategory(SelectCategoryEvent event, Emitter<TodoState> emit) {
-    final filtered = _applyFilters(state.todos, state.activeFilter, event.category, state.searchQuery);
+    final filtered = _applyFilters(
+      state.todos,
+      state.activeFilter,
+      state.dateFilter,
+      event.category,
+      state.searchQuery,
+    );
     emit(state.copyWith(
       selectedCategory: event.category,
       filteredTodos: filtered,
@@ -146,7 +179,13 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
   }
 
   void _onSearchQuery(SearchQueryEvent event, Emitter<TodoState> emit) {
-    final filtered = _applyFilters(state.todos, state.activeFilter, state.selectedCategory, event.query);
+    final filtered = _applyFilters(
+      state.todos,
+      state.activeFilter,
+      state.dateFilter,
+      state.selectedCategory,
+      event.query,
+    );
     emit(state.copyWith(
       searchQuery: event.query,
       filteredTodos: filtered,
@@ -156,20 +195,34 @@ class TodoBloc extends Bloc<TodoEvent, TodoState> {
   List<TodoItemEntity> _applyFilters(
     List<TodoItemEntity> todos,
     String filter,
+    String dateFilter,
     String category,
     String query,
   ) {
     return todos.where((item) {
-      // Filter status
+      // 1. Filter status
       if (filter == 'active' && item.isCompleted) return false;
       if (filter == 'completed' && !item.isCompleted) return false;
 
-      // Filter category
+      // 2. Filter date
+      if (dateFilter == 'today') {
+        if (!item.isAssignedToday && !item.isDueToday) return false;
+      } else if (dateFilter == 'upcoming') {
+        final now = DateTime.now();
+        final startOfTomorrow = DateTime(now.year, now.month, now.day + 1);
+        final isUpcoming = item.effectiveAssignedDate.isAfter(now) ||
+            (item.dueDate != null && item.dueDate!.isAfter(startOfTomorrow));
+        if (!isUpcoming || item.isAssignedToday) return false;
+      } else if (dateFilter == 'overdue') {
+        if (!item.isOverdue) return false;
+      }
+
+      // 3. Filter category
       if (category != 'All' && item.category.toLowerCase() != category.toLowerCase()) {
         return false;
       }
 
-      // Filter search
+      // 4. Filter search
       if (query.isNotEmpty) {
         final q = query.toLowerCase();
         final matchTitle = item.title.toLowerCase().contains(q);

@@ -7,6 +7,7 @@ class TodoItemModel {
   final String category;
   final bool isCompleted;
   final String priority;
+  final String? assignedDate;
   final String? dueDate;
   final String createdAt;
 
@@ -17,6 +18,7 @@ class TodoItemModel {
     required this.category,
     required this.isCompleted,
     required this.priority,
+    this.assignedDate,
     this.dueDate,
     required this.createdAt,
   });
@@ -29,6 +31,7 @@ class TodoItemModel {
       category: (json['category'] as String?) ?? 'Personal',
       isCompleted: (json['isCompleted'] as bool?) ?? false,
       priority: (json['priority'] as String?) ?? 'medium',
+      assignedDate: json['assignedDate'] as String?,
       dueDate: json['dueDate'] as String?,
       createdAt: json['createdAt'] as String,
     );
@@ -42,6 +45,7 @@ class TodoItemModel {
       'category': category,
       'isCompleted': isCompleted,
       'priority': priority,
+      'assignedDate': assignedDate,
       'dueDate': dueDate,
       'createdAt': createdAt,
     };
@@ -58,6 +62,7 @@ extension TodoItemModelX on TodoItemModel {
       category: entity.category,
       isCompleted: entity.isCompleted,
       priority: entity.priority.name,
+      assignedDate: entity.assignedDate?.toIso8601String(),
       dueDate: entity.dueDate?.toIso8601String(),
       createdAt: entity.createdAt.toIso8601String(),
     );
@@ -74,6 +79,7 @@ extension TodoItemModelX on TodoItemModel {
         (p) => p.name == priority,
         orElse: () => TodoPriority.medium,
       ),
+      assignedDate: assignedDate != null ? DateTime.tryParse(assignedDate!) : null,
       dueDate: dueDate != null ? DateTime.tryParse(dueDate!) : null,
       createdAt: DateTime.tryParse(createdAt) ?? DateTime.now(),
     );

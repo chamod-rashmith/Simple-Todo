@@ -91,6 +91,23 @@ class TodoDetailModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final tomorrow = now.add(const Duration(days: 1));
+
+    String? formattedAssignedDate;
+    final assigned = todo.assignedDate;
+    if (assigned != null) {
+      if (todo.isAssignedToday) {
+        formattedAssignedDate = 'Today • ${DateFormat('EEEE, MMM d, yyyy').format(assigned)}';
+      } else if (assigned.year == tomorrow.year &&
+          assigned.month == tomorrow.month &&
+          assigned.day == tomorrow.day) {
+        formattedAssignedDate = 'Tomorrow • ${DateFormat('EEEE, MMM d, yyyy').format(assigned)}';
+      } else {
+        formattedAssignedDate = DateFormat('EEEE, MMM d, yyyy').format(assigned);
+      }
+    }
+
     final formattedDueDate = todo.dueDate != null
         ? DateFormat('EEEE, MMM d, yyyy • h:mm a').format(todo.dueDate!)
         : null;
@@ -98,9 +115,7 @@ class TodoDetailModal extends StatelessWidget {
     final formattedCreatedDate =
         DateFormat('MMM d, yyyy • h:mm a').format(todo.createdAt);
 
-    final isPastDue = todo.dueDate != null &&
-        todo.dueDate!.isBefore(DateTime.now()) &&
-        !todo.isCompleted;
+    final isPastDue = todo.isOverdue;
 
     final screenHeight = MediaQuery.of(context).size.height;
 
@@ -250,7 +265,57 @@ class TodoDetailModal extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
 
-                    // Due Date / Schedule Info
+                    // Assigned / Planned Date Info
+                    if (formattedAssignedDate != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: todo.isAssignedToday
+                              ? AppColors.surfaceContainerHigh
+                              : AppColors.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.hairline),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.calendar_today_rounded,
+                              size: 18,
+                              color: AppColors.textPrimary,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'SCHEDULED / ASSIGNED DAY',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.6,
+                                      color: AppColors.textMuted,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    formattedAssignedDate,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+
+                    // Due Date / Deadline Info
                     if (formattedDueDate != null) ...[
                       Container(
                         padding: const EdgeInsets.all(12),
@@ -272,13 +337,13 @@ class TodoDetailModal extends StatelessWidget {
                               size: 18,
                               color: isPastDue ? AppColors.error : AppColors.textPrimary,
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    isPastDue ? 'OVERDUE DEADLINE' : 'DUE DATE & TIME',
+                                    isPastDue ? 'OVERDUE DEADLINE' : 'DEADLINE & REMINDER',
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w800,

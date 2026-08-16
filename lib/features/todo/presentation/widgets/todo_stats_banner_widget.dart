@@ -5,12 +5,14 @@ class TodoStatsBannerWidget extends StatelessWidget {
   final int completedCount;
   final int totalCount;
   final double ratio;
+  final String title;
 
   const TodoStatsBannerWidget({
     super.key,
     required this.completedCount,
     required this.totalCount,
     required this.ratio,
+    this.title = 'TODAY\'S DAILY PROGRESS',
   });
 
   @override
@@ -19,11 +21,11 @@ class TodoStatsBannerWidget extends StatelessWidget {
 
     String subtitle;
     if (totalCount == 0) {
-      subtitle = 'Ready to plan your day';
+      subtitle = 'No tasks scheduled for today';
     } else if (completedCount == totalCount) {
-      subtitle = 'All tasks completed. Excellent work.';
+      subtitle = 'All today\'s tasks completed! 🎉';
     } else {
-      subtitle = '$completedCount of $totalCount tasks completed';
+      subtitle = '$completedCount of $totalCount tasks completed today';
     }
 
     return Container(
@@ -49,14 +51,27 @@ class TodoStatsBannerWidget extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'DAILY PROGRESS',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textSubtle,
-                      letterSpacing: 1.0,
-                    ),
+                  Row(
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: AppColors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textSubtle,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -110,3 +125,4 @@ class TodoStatsBannerWidget extends StatelessWidget {
     );
   }
 }
+

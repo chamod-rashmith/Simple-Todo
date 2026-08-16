@@ -10,6 +10,7 @@ class TodoItemEntries extends Table {
   TextColumn get category => text()();
   BoolColumn get isCompleted => boolean().withDefault(const Constant(false))();
   TextColumn get priority => text()();
+  TextColumn get assignedDate => text().nullable()();
   TextColumn get dueDate => text().nullable()();
   TextColumn get createdAt => text()();
 

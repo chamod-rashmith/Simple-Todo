@@ -50,6 +50,14 @@ class FilterTodosEvent extends TodoEvent {
   List<Object?> get props => [filter];
 }
 
+class FilterDateEvent extends TodoEvent {
+  final String dateFilter; // 'all', 'today', 'upcoming', 'overdue'
+  const FilterDateEvent(this.dateFilter);
+
+  @override
+  List<Object?> get props => [dateFilter];
+}
+
 class SelectCategoryEvent extends TodoEvent {
   final String category; // 'All' or specific category
   const SelectCategoryEvent(this.category);

@@ -31,6 +31,7 @@ class TodoLocalDataSourceImpl implements TodoLocalDataSource {
         category: row.category,
         isCompleted: row.isCompleted,
         priority: row.priority,
+        assignedDate: row.assignedDate,
         dueDate: row.dueDate,
         createdAt: row.createdAt,
       );
@@ -47,6 +48,7 @@ class TodoLocalDataSourceImpl implements TodoLocalDataSource {
             category: model.category,
             isCompleted: Value(model.isCompleted),
             priority: model.priority,
+            assignedDate: Value(model.assignedDate),
             dueDate: Value(model.dueDate),
             createdAt: model.createdAt,
           ),
@@ -63,6 +65,7 @@ class TodoLocalDataSourceImpl implements TodoLocalDataSource {
         description: Value(model.description),
         category: Value(model.category),
         priority: Value(model.priority),
+        assignedDate: Value(model.assignedDate),
         dueDate: Value(model.dueDate),
         isCompleted: Value(model.isCompleted),
       ),
