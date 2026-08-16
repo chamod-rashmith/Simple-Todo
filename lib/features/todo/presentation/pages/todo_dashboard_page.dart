@@ -160,7 +160,7 @@ class TodoDashboardPage extends StatelessWidget {
                     ),
 
                   const SliverToBoxAdapter(
-                    child: SizedBox(height: 88),
+                    child: SizedBox(height: 100),
                   ),
                 ],
               ),

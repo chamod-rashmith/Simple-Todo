@@ -18,13 +18,38 @@ class TodoItemEntries extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-@DriftDatabase(tables: [TodoItemEntries])
+class NoteEntries extends Table {
+  TextColumn get id => text()();
+  TextColumn get title => text()();
+  TextColumn get content => text()();
+  TextColumn get category => text()();
+  BoolColumn get isPinned => boolean().withDefault(const Constant(false))();
+  TextColumn get createdAt => text()();
+  TextColumn get updatedAt => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DriftDatabase(tables: [TodoItemEntries, NoteEntries])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: 'simple_todo'));
 
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) async {
+          await m.createAll();
+        },
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.createTable(noteEntries);
+          }
+        },
+      );
 }
 
