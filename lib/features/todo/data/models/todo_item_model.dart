@@ -1,55 +1,25 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../domain/entities/todo_item.dart';
 
-class TodoItemModel {
-  final String id;
-  final String title;
-  final String description;
-  final String category;
-  final bool isCompleted;
-  final String priority;
-  final String? assignedDate;
-  final String? dueDate;
-  final String createdAt;
+part 'todo_item_model.freezed.dart';
+part 'todo_item_model.g.dart';
 
-  const TodoItemModel({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.category,
-    required this.isCompleted,
-    required this.priority,
-    this.assignedDate,
-    this.dueDate,
-    required this.createdAt,
-  });
+@freezed
+abstract class TodoItemModel with _$TodoItemModel {
+  const factory TodoItemModel({
+    required String id,
+    required String title,
+    @Default('') String description,
+    @Default('Personal') String category,
+    @Default(false) bool isCompleted,
+    @Default('medium') String priority,
+    String? assignedDate,
+    String? dueDate,
+    required String createdAt,
+  }) = _TodoItemModel;
 
-  factory TodoItemModel.fromJson(Map<String, dynamic> json) {
-    return TodoItemModel(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      description: (json['description'] as String?) ?? '',
-      category: (json['category'] as String?) ?? 'Personal',
-      isCompleted: (json['isCompleted'] as bool?) ?? false,
-      priority: (json['priority'] as String?) ?? 'medium',
-      assignedDate: json['assignedDate'] as String?,
-      dueDate: json['dueDate'] as String?,
-      createdAt: json['createdAt'] as String,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'title': title,
-      'description': description,
-      'category': category,
-      'isCompleted': isCompleted,
-      'priority': priority,
-      'assignedDate': assignedDate,
-      'dueDate': dueDate,
-      'createdAt': createdAt,
-    };
-  }
+  factory TodoItemModel.fromJson(Map<String, dynamic> json) =>
+      _$TodoItemModelFromJson(json);
 }
 
 /// Extension Mappers to convert between Data Model and Domain Entity

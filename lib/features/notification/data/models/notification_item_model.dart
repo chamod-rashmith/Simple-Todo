@@ -1,4 +1,8 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../domain/entities/notification_item.dart';
+
+part 'notification_item_model.freezed.dart';
+part 'notification_item_model.g.dart';
 
 /// ============================================================================
 /// NotificationItemModel
@@ -11,44 +15,18 @@ import '../../domain/entities/notification_item.dart';
 /// 1. DataSources only interact with Models, never domain entities.
 /// 2. Extension mappers (`NotificationItemModelX`) convert between
 ///    `NotificationItemModel` (Data Layer) and `NotificationItemEntity` (Domain Layer).
-class NotificationItemModel {
-  final String id;
-  final String title;
-  final String body;
-  final DateTime? scheduledDate;
-  final String? payload;
+@freezed
+abstract class NotificationItemModel with _$NotificationItemModel {
+  const factory NotificationItemModel({
+    required String id,
+    required String title,
+    required String body,
+    DateTime? scheduledDate,
+    String? payload,
+  }) = _NotificationItemModel;
 
-  const NotificationItemModel({
-    required this.id,
-    required this.title,
-    required this.body,
-    this.scheduledDate,
-    this.payload,
-  });
-
-  /// Factory constructor to deserialize from JSON map if persisted or transported over network.
-  factory NotificationItemModel.fromJson(Map<String, dynamic> json) {
-    return NotificationItemModel(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      body: json['body'] as String,
-      scheduledDate: json['scheduledDate'] != null
-          ? DateTime.parse(json['scheduledDate'] as String)
-          : null,
-      payload: json['payload'] as String?,
-    );
-  }
-
-  /// Serializes the model into a standard JSON map.
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'title': title,
-      'body': body,
-      'scheduledDate': scheduledDate?.toIso8601String(),
-      'payload': payload,
-    };
-  }
+  factory NotificationItemModel.fromJson(Map<String, dynamic> json) =>
+      _$NotificationItemModelFromJson(json);
 }
 
 /// ============================================================================

@@ -1,47 +1,23 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../domain/entities/note_entity.dart';
 
-class NoteModel {
-  final String id;
-  final String title;
-  final String content;
-  final String category;
-  final bool isPinned;
-  final String createdAt;
-  final String updatedAt;
+part 'note_model.freezed.dart';
+part 'note_model.g.dart';
 
-  const NoteModel({
-    required this.id,
-    required this.title,
-    required this.content,
-    required this.category,
-    required this.isPinned,
-    required this.createdAt,
-    required this.updatedAt,
-  });
+@freezed
+abstract class NoteModel with _$NoteModel {
+  const factory NoteModel({
+    required String id,
+    required String title,
+    @Default('') String content,
+    @Default('General') String category,
+    @Default(false) bool isPinned,
+    required String createdAt,
+    required String updatedAt,
+  }) = _NoteModel;
 
-  factory NoteModel.fromJson(Map<String, dynamic> json) {
-    return NoteModel(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      content: (json['content'] as String?) ?? '',
-      category: (json['category'] as String?) ?? 'General',
-      isPinned: (json['isPinned'] as bool?) ?? false,
-      createdAt: json['createdAt'] as String,
-      updatedAt: json['updatedAt'] as String,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'title': title,
-      'content': content,
-      'category': category,
-      'isPinned': isPinned,
-      'createdAt': createdAt,
-      'updatedAt': updatedAt,
-    };
-  }
+  factory NoteModel.fromJson(Map<String, dynamic> json) =>
+      _$NoteModelFromJson(json);
 }
 
 /// Extension Mappers to convert between Data Model and Domain Entity
