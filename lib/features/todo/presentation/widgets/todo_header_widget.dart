@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -19,12 +20,22 @@ class TodoHeaderWidget extends StatefulWidget {
 
 class _TodoHeaderWidgetState extends State<TodoHeaderWidget> {
   final TextEditingController _searchController = TextEditingController();
+  Timer? _debounceTimer;
+
+  void _onSearchInputChanged(String query) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 250), () {
+      widget.onSearchChanged(query);
+    });
+  }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +107,7 @@ class _TodoHeaderWidgetState extends State<TodoHeaderWidget> {
           ),
           child: TextField(
             controller: _searchController,
-            onChanged: widget.onSearchChanged,
+            onChanged: _onSearchInputChanged,
             style: const TextStyle(
               fontSize: 14,
               color: AppColors.textPrimary,
@@ -121,6 +132,7 @@ class _TodoHeaderWidgetState extends State<TodoHeaderWidget> {
                         size: 18,
                       ),
                       onPressed: () {
+                        _debounceTimer?.cancel();
                         _searchController.clear();
                         widget.onSearchChanged('');
                         setState(() {});

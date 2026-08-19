@@ -3,6 +3,9 @@ import 'package:drift_flutter/drift_flutter.dart';
 
 part 'app_database.g.dart';
 
+@TableIndex(name: 'idx_todos_created_at', columns: {#createdAt})
+@TableIndex(name: 'idx_todos_status_due', columns: {#isCompleted, #dueDate})
+@TableIndex(name: 'idx_todos_category', columns: {#category})
 class TodoItemEntries extends Table {
   TextColumn get id => text()();
   TextColumn get title => text()();
@@ -18,6 +21,8 @@ class TodoItemEntries extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+@TableIndex(name: 'idx_notes_pinned_updated', columns: {#isPinned, #updatedAt})
+@TableIndex(name: 'idx_notes_category', columns: {#category})
 class NoteEntries extends Table {
   TextColumn get id => text()();
   TextColumn get title => text()();
@@ -38,7 +43,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -49,7 +54,15 @@ class AppDatabase extends _$AppDatabase {
           if (from < 2) {
             await m.createTable(noteEntries);
           }
+          if (from < 3) {
+            await m.createIndex(idxTodosCreatedAt);
+            await m.createIndex(idxTodosStatusDue);
+            await m.createIndex(idxTodosCategory);
+            await m.createIndex(idxNotesPinnedUpdated);
+            await m.createIndex(idxNotesCategory);
+          }
         },
       );
 }
+
 

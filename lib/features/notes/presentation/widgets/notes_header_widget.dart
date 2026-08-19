@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -20,12 +21,22 @@ class NotesHeaderWidget extends StatefulWidget {
 
 class _NotesHeaderWidgetState extends State<NotesHeaderWidget> {
   final TextEditingController _searchController = TextEditingController();
+  Timer? _debounceTimer;
+
+  void _onSearchInputChanged(String query) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 250), () {
+      widget.onSearchChanged(query);
+    });
+  }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +91,7 @@ class _NotesHeaderWidgetState extends State<NotesHeaderWidget> {
               Expanded(
                 child: TextField(
                   controller: _searchController,
-                  onChanged: widget.onSearchChanged,
+                  onChanged: _onSearchInputChanged,
                   style: AppTypography.body.copyWith(fontSize: 14),
                   decoration: const InputDecoration(
                     hintText: 'Search notes by title, tag, or content...',
@@ -98,6 +109,7 @@ class _NotesHeaderWidgetState extends State<NotesHeaderWidget> {
               if (_searchController.text.isNotEmpty)
                 GestureDetector(
                   onTap: () {
+                    _debounceTimer?.cancel();
                     _searchController.clear();
                     widget.onSearchChanged('');
                     setState(() {});

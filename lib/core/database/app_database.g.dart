@@ -1042,6 +1042,26 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final $NoteEntriesTable noteEntries = $NoteEntriesTable(this);
+  late final Index idxTodosCreatedAt = Index(
+    'idx_todos_created_at',
+    'CREATE INDEX idx_todos_created_at ON todo_item_entries (created_at)',
+  );
+  late final Index idxTodosStatusDue = Index(
+    'idx_todos_status_due',
+    'CREATE INDEX idx_todos_status_due ON todo_item_entries (is_completed, due_date)',
+  );
+  late final Index idxTodosCategory = Index(
+    'idx_todos_category',
+    'CREATE INDEX idx_todos_category ON todo_item_entries (category)',
+  );
+  late final Index idxNotesPinnedUpdated = Index(
+    'idx_notes_pinned_updated',
+    'CREATE INDEX idx_notes_pinned_updated ON note_entries (is_pinned, updated_at)',
+  );
+  late final Index idxNotesCategory = Index(
+    'idx_notes_category',
+    'CREATE INDEX idx_notes_category ON note_entries (category)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1049,6 +1069,11 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     todoItemEntries,
     noteEntries,
+    idxTodosCreatedAt,
+    idxTodosStatusDue,
+    idxTodosCategory,
+    idxNotesPinnedUpdated,
+    idxNotesCategory,
   ];
 }
 
